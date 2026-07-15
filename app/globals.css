@@ -24,3 +24,93 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* CLS-safe ad slots: reserve height before the ad fills in. Heights come from
+   AdSlot via CSS custom properties, with a per-breakpoint fallback. */
+.ad-slot {
+  display: block;
+  margin: 2rem auto;
+  text-align: center;
+  min-height: var(--ad-mh-mobile, 280px);
+}
+.ad-slot .adsbygoogle {
+  display: block;
+}
+@media (min-width: 768px) {
+  .ad-slot {
+    min-height: var(--ad-mh-desktop, 280px);
+  }
+}
+
+/* Readable typography for rendered markdown article bodies. */
+.article-content {
+  line-height: 1.75;
+  font-size: 1.0625rem;
+}
+.article-content h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.article-content h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.article-content p,
+.article-content ul,
+.article-content ol,
+.article-content blockquote,
+.article-content pre {
+  margin-bottom: 1.1rem;
+}
+.article-content ul,
+.article-content ol {
+  padding-left: 1.5rem;
+}
+.article-content ul {
+  list-style: disc;
+}
+.article-content ol {
+  list-style: decimal;
+}
+.article-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.article-content blockquote {
+  border-left: 3px solid #d4d4d8;
+  padding-left: 1rem;
+  color: #52525b;
+  font-style: italic;
+}
+.article-content code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.9em;
+  background: rgba(127, 127, 127, 0.12);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.article-content pre {
+  background: rgba(127, 127, 127, 0.12);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.article-content pre code {
+  background: transparent;
+  padding: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .article-content a {
+    color: #60a5fa;
+  }
+  .article-content blockquote {
+    border-left-color: #3f3f46;
+    color: #a1a1aa;
+  }
+}

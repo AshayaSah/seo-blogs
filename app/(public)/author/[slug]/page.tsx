@@ -79,19 +79,19 @@ export default async function AuthorPage({
             alt={author.name ?? "Author avatar"}
             width={96}
             height={96}
-            className="h-24 w-24 rounded-full border border-zinc-200 object-cover dark:border-zinc-800"
+            className="h-24 w-24 rounded-full border border-border object-cover"
           />
         )}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{author.name}</h1>
           {author.jobTitle && (
-            <p className="mt-1 text-zinc-500">{author.jobTitle}</p>
+            <p className="mt-1 text-muted-foreground">{author.jobTitle}</p>
           )}
         </div>
       </header>
 
       {author.bio && (
-        <p className="mt-6 leading-relaxed text-zinc-700 dark:text-zinc-300">
+        <p className="mt-6 leading-relaxed text-foreground">
           {author.bio}
         </p>
       )}
@@ -105,7 +105,7 @@ export default async function AuthorPage({
                   href={url}
                   rel="me noopener noreferrer"
                   target="_blank"
-                  className="rounded-full border border-zinc-300 px-3 py-1 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                  className="rounded-full border border-border px-3 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   {hostOf(url)}
                 </a>
@@ -120,27 +120,27 @@ export default async function AuthorPage({
           Posts by {author.name}
         </h2>
         {posts.length === 0 ? (
-          <p className="text-zinc-500">No published posts yet.</p>
+          <p className="text-muted-foreground">No published posts yet.</p>
         ) : (
           <ul className="flex flex-col gap-4">
             {posts.map((p) => (
               <li key={p.id}>
                 <Link
                   href={`/blog/${p.slug}`}
-                  className="block rounded-lg border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
+                  className="block rounded-lg border border-border p-4 transition-colors hover:bg-muted"
                 >
-                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                  <span className="font-medium text-primary">
                     {p.title}
                   </span>
                   {p.metaDescription && (
-                    <span className="mt-1 block text-sm text-zinc-500">
+                    <span className="mt-1 block text-sm text-muted-foreground">
                       {p.metaDescription}
                     </span>
                   )}
                   {p.publishedAt && (
                     <time
                       dateTime={p.publishedAt.toISOString()}
-                      className="mt-2 block text-xs text-zinc-400"
+                      className="mt-2 block text-xs text-muted-foreground"
                     >
                       {p.publishedAt.toLocaleDateString("en-US", {
                         year: "numeric",

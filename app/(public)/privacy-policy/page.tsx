@@ -11,7 +11,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <h1 className="text-3xl font-bold tracking-tight">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-zinc-500">
+      <p className="mt-2 text-sm text-muted-foreground">
         Last updated: {new Date().getFullYear()}
       </p>
 

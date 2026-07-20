@@ -6,13 +6,17 @@
 export default function Newsletter() {
   return (
     <section
-      aria-labelledby="newsletter"
-      className="rounded-2xl border border-zinc-200 bg-zinc-50 p-8 text-center dark:border-zinc-800 dark:bg-zinc-900/40"
+      id="newsletter"
+      aria-labelledby="newsletter-heading"
+      className="rounded-2xl border border-border bg-muted p-8 text-center"
     >
-      <h2 id="newsletter" className="text-xl font-semibold tracking-tight">
+      <h2
+        id="newsletter-heading"
+        className="text-xl font-semibold tracking-tight"
+      >
         Get new posts in your inbox
       </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-zinc-500">
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
         Occasional updates on SEO and content strategy. No spam.
       </p>
       <form
@@ -25,12 +29,9 @@ export default function Newsletter() {
           required
           placeholder="you@example.com"
           aria-label="Email address"
-          className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950"
+          className="field flex-1"
         />
-        <button
-          type="submit"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
-        >
+        <button type="submit" className="btn btn-primary">
           Subscribe
         </button>
       </form>

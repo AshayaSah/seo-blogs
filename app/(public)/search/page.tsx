@@ -22,7 +22,7 @@ export default async function SearchPage({
   const results = query ? await searchPosts(query) : [];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <div className="site-container py-10">
       <h1 className="text-3xl font-bold tracking-tight">Search</h1>
 
       <form method="get" className="mt-6 flex max-w-xl gap-2">
@@ -32,18 +32,15 @@ export default async function SearchPage({
           defaultValue={query}
           placeholder="Search articles…"
           aria-label="Search query"
-          className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950"
+          className="field flex-1"
         />
-        <button
-          type="submit"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
-        >
+        <button type="submit" className="btn btn-primary">
           Search
         </button>
       </form>
 
       {query && (
-        <p className="mt-6 text-sm text-zinc-500">
+        <p className="mt-6 text-sm text-muted-foreground">
           {results.length} result{results.length === 1 ? "" : "s"} for “{query}”
         </p>
       )}
@@ -57,7 +54,7 @@ export default async function SearchPage({
       )}
 
       {query && results.length === 0 && (
-        <p className="mt-10 text-center text-zinc-500">
+        <p className="mt-10 text-center text-muted-foreground">
           No articles matched “{query}”.
         </p>
       )}

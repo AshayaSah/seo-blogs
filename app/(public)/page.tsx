@@ -1,10 +1,20 @@
 import Link from "next/link";
 import { getPublishedPostsLite, getCategories } from "@/src/lib/posts";
-import { SITE_NAME, SITE_DESCRIPTION } from "@/src/lib/site";
+import { SITE_DESCRIPTION } from "@/src/lib/site";
 import PostCard from "@/src/components/site/PostCard";
 import Newsletter from "@/src/components/site/Newsletter";
 
 export const revalidate = 3600;
+
+function formatDate(d: Date | null): string | null {
+  return d
+    ? d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+}
 
 export default async function HomePage() {
   const [posts, categories] = await Promise.all([
@@ -12,19 +22,39 @@ export default async function HomePage() {
     getCategories(),
   ]);
 
-  const featured = posts[0];
-  const latest = posts.slice(1, 7);
+  const gridPosts = posts.slice(0, 6);
+  const featured = posts.slice(0, 3);
+  const latest = posts.slice(3, 7);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <div className="site-container py-10">
       {/* Hero */}
-      <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          {SITE_NAME}
+      <section className="mx-auto mb-14 max-w-2xl text-center">
+        <span className="badge">Blog</span>
+        <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
+          Discover our latest news
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
+        <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
           {SITE_DESCRIPTION}
         </p>
+
+        <form
+          method="get"
+          action="/search"
+          className="mx-auto mt-7 flex max-w-lg gap-2"
+        >
+          <input
+            type="search"
+            name="q"
+            placeholder="Search articles…"
+            aria-label="Search articles"
+            className="field"
+          />
+          <button type="submit" className="btn btn-primary">
+            Find Now
+          </button>
+        </form>
+
         {categories.length > 0 && (
           <nav
             aria-label="Categories"
@@ -34,7 +64,7 @@ export default async function HomePage() {
               <Link
                 key={c.slug}
                 href={`/blog/category/${c.slug}`}
-                className="rounded-full border border-zinc-300 px-3 py-1 text-sm text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                className="rounded-full border border-border px-3 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 {c.name}
               </Link>
@@ -44,73 +74,125 @@ export default async function HomePage() {
       </section>
 
       {posts.length === 0 ? (
-        <p className="py-16 text-center text-zinc-500">No posts yet.</p>
+        <p className="py-16 text-center text-muted-foreground">No posts yet.</p>
       ) : (
-        <>
-          {/* Featured / most recent */}
-          {featured && (
-            <section aria-labelledby="featured" className="mb-14">
-              <h2 id="featured" className="sr-only">
-                Featured post
-              </h2>
-              <Link
-                href={`/blog/${featured.slug}`}
-                className="group grid gap-6 overflow-hidden rounded-2xl border border-zinc-200 md:grid-cols-2 dark:border-zinc-800"
+        <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
+          {/* Main column: latest articles grid */}
+          <section aria-labelledby="latest-articles">
+            <div className="mb-6 flex items-center gap-4">
+              <h2
+                id="latest-articles"
+                className="whitespace-nowrap text-xl font-semibold tracking-tight"
               >
-                {featured.featuredImage && (
-                  <img
-                    src={featured.featuredImage.url}
-                    alt={featured.featuredImage.alt_text}
-                    width={featured.featuredImage.width}
-                    height={featured.featuredImage.height}
-                    className="aspect-[16/9] w-full object-cover md:aspect-auto md:h-full"
-                    style={{ height: "auto" }}
-                  />
-                )}
-                <div className="flex flex-col justify-center p-6">
-                  {featured.category && (
-                    <span className="text-xs font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">
-                      {featured.category}
-                    </span>
-                  )}
-                  <h3 className="mt-2 text-2xl font-bold tracking-tight group-hover:underline">
-                    {featured.title ?? featured.slug}
-                  </h3>
-                  {featured.metaDescription && (
-                    <p className="mt-3 text-zinc-600 dark:text-zinc-400">
-                      {featured.metaDescription}
-                    </p>
-                  )}
-                </div>
+                Latest articles
+              </h2>
+              <span className="h-px flex-1 bg-border" />
+              <Link
+                href="/blog"
+                className="whitespace-nowrap text-sm text-primary hover:underline"
+              >
+                View all →
               </Link>
-            </section>
-          )}
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {gridPosts.map((p) => (
+                <PostCard key={p.id} post={p} />
+              ))}
+            </div>
+          </section>
 
-          {/* Latest grid */}
-          {latest.length > 0 && (
-            <section aria-labelledby="latest" className="mb-14">
-              <div className="mb-5 flex items-center justify-between">
-                <h2 id="latest" className="text-xl font-semibold tracking-tight">
-                  Latest posts
-                </h2>
-                <Link
-                  href="/blog"
-                  className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+          {/* Sidebar: Featured + Latest */}
+          <aside className="flex flex-col gap-10">
+            {featured.length > 0 && (
+              <section aria-labelledby="featured">
+                <h2
+                  id="featured"
+                  className="mb-4 border-b border-border pb-2 text-lg font-semibold tracking-tight"
                 >
-                  View all →
-                </Link>
-              </div>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {latest.map((p) => (
-                  <PostCard key={p.id} post={p} />
-                ))}
-              </div>
-            </section>
-          )}
-        </>
+                  Featured
+                </h2>
+                <ul className="flex flex-col gap-5">
+                  {featured.map((p) => (
+                    <li key={p.id} className="flex gap-3">
+                      {p.featuredImage && (
+                        <Link
+                          href={`/blog/${p.slug}`}
+                          className="shrink-0"
+                          aria-hidden
+                          tabIndex={-1}
+                        >
+                          <img
+                            src={p.featuredImage.url}
+                            alt=""
+                            width={64}
+                            height={64}
+                            className="h-16 w-16 rounded-lg object-cover"
+                          />
+                        </Link>
+                      )}
+                      <div>
+                        {formatDate(p.publishedAt) && (
+                          <time
+                            dateTime={p.publishedAt!.toISOString()}
+                            className="text-xs text-muted-foreground"
+                          >
+                            {formatDate(p.publishedAt)}
+                          </time>
+                        )}
+                        <h3 className="mt-0.5 text-sm font-semibold leading-snug">
+                          <Link
+                            href={`/blog/${p.slug}`}
+                            className="hover:text-primary"
+                          >
+                            {p.title ?? p.slug}
+                          </Link>
+                        </h3>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {latest.length > 0 && (
+              <section aria-labelledby="sidebar-latest">
+                <h2
+                  id="sidebar-latest"
+                  className="mb-4 border-b border-border pb-2 text-lg font-semibold tracking-tight"
+                >
+                  Latest
+                </h2>
+                <ul className="flex flex-col gap-4">
+                  {latest.map((p) => (
+                    <li key={p.id}>
+                      {formatDate(p.publishedAt) && (
+                        <time
+                          dateTime={p.publishedAt!.toISOString()}
+                          className="text-xs text-muted-foreground"
+                        >
+                          {formatDate(p.publishedAt)}
+                        </time>
+                      )}
+                      <h3 className="mt-0.5 text-sm font-semibold leading-snug">
+                        <Link
+                          href={`/blog/${p.slug}`}
+                          className="hover:text-primary"
+                        >
+                          {p.title ?? p.slug}
+                        </Link>
+                      </h3>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </aside>
+        </div>
       )}
 
-      <Newsletter />
+      <div className="mt-16">
+        <Newsletter />
+      </div>
     </div>
   );
 }

@@ -6,24 +6,18 @@ import { SITE_NAME } from "@/src/lib/site";
 export default function NotFound() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-      <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+      <p className="text-sm font-semibold uppercase tracking-wide text-primary">
         404
       </p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight">Page not found</h1>
-      <p className="mt-3 max-w-md text-zinc-500">
+      <p className="mt-3 max-w-md text-muted-foreground">
         The page you’re looking for doesn’t exist or may have moved.
       </p>
-      <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
-        <Link
-          href="/"
-          className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white dark:bg-white dark:text-zinc-900"
-        >
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Link href="/" className="btn btn-primary">
           Back to {SITE_NAME}
         </Link>
-        <Link
-          href="/blog"
-          className="rounded-md border border-zinc-300 px-4 py-2 font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-        >
+        <Link href="/blog" className="btn btn-outline">
           Browse the blog
         </Link>
       </div>

@@ -84,13 +84,12 @@ export default function ReviewEditor({
     }
   }
 
-  const inputClass =
-    "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900";
+  const inputClass = "field";
 
   return (
     <div className="flex flex-col gap-4">
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Title{" "}
           <span className="font-normal normal-case">({title.length} chars)</span>
         </span>
@@ -102,7 +101,7 @@ export default function ReviewEditor({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Meta description{" "}
           <span className="font-normal normal-case">
             ({metaDescription.length} chars)
@@ -117,7 +116,7 @@ export default function ReviewEditor({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Content body (markdown)
         </span>
         <textarea
@@ -132,20 +131,18 @@ export default function ReviewEditor({
       {feedback && (
         <p
           className={`text-sm ${
-            feedback.kind === "ok"
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400"
+            feedback.kind === "ok" ? "text-emerald-600" : "text-red-600"
           }`}
         >
           {feedback.text}
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+      <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
         <button
           onClick={saveEdits}
           disabled={busy !== null || !dirty}
-          className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          className="btn btn-outline"
         >
           {busy === "save" ? "Saving…" : "Save edits"}
         </button>
@@ -153,7 +150,7 @@ export default function ReviewEditor({
         <button
           onClick={() => act("approve")}
           disabled={busy !== null}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="btn bg-emerald-600 text-white hover:bg-emerald-700"
         >
           {busy === "approve" ? "Approving…" : "Approve & publish"}
         </button>
@@ -161,12 +158,12 @@ export default function ReviewEditor({
         <button
           onClick={() => act("reject")}
           disabled={busy !== null}
-          className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          className="btn bg-red-600 text-white hover:bg-red-700"
         >
           {busy === "reject" ? "Rejecting…" : "Reject"}
         </button>
 
-        <span className="ml-auto text-xs text-zinc-500">
+        <span className="ml-auto text-xs text-muted-foreground">
           Current status: {status}
         </span>
       </div>

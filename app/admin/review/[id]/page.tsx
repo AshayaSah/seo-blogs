@@ -34,7 +34,7 @@ export default async function ReviewPage({
       <div className="mb-6 flex items-center justify-between">
         <Link
           href="/admin"
-          className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+          className="text-sm text-primary hover:underline"
         >
           ← Back to queue
         </Link>
@@ -55,8 +55,8 @@ export default async function ReviewPage({
 
         {/* Sidebar: metadata + quality report */}
         <aside className="flex flex-col gap-6">
-          <section className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <section className="rounded-lg border border-border p-4 text-sm">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Details
             </h2>
             <dl className="flex flex-col gap-2">
@@ -82,15 +82,13 @@ export default async function ReviewPage({
             </dl>
           </section>
 
-          <section className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          <section className="rounded-lg border border-border p-4 text-sm">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Quality report
               {report && (
                 <span
                   className={`ml-2 ${
-                    report.passed
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-amber-600 dark:text-amber-400"
+                    report.passed ? "text-emerald-600" : "text-amber-600"
                   }`}
                 >
                   {report.passed ? "passed" : "failed"}
@@ -98,23 +96,19 @@ export default async function ReviewPage({
               )}
             </h2>
             {!report ? (
-              <p className="text-zinc-500">No report recorded.</p>
+              <p className="text-muted-foreground">No report recorded.</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {report.checks.map((c) => (
                   <li key={c.name} className="flex gap-2">
                     <span
-                      className={
-                        c.passed
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-red-600 dark:text-red-400"
-                      }
+                      className={c.passed ? "text-emerald-600" : "text-red-600"}
                     >
                       {c.passed ? "✓" : "✗"}
                     </span>
                     <span>
                       <span className="font-medium">{c.name}</span>
-                      <span className="block text-xs text-zinc-500">
+                      <span className="block text-xs text-muted-foreground">
                         {c.detail}
                       </span>
                     </span>
@@ -132,7 +126,7 @@ export default async function ReviewPage({
 function Detail({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-zinc-500">{label}</dt>
+      <dt className="text-muted-foreground">{label}</dt>
       <dd className="text-right font-medium">{value ?? "—"}</dd>
     </div>
   );

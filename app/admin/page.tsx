@@ -43,7 +43,7 @@ export default async function AdminDashboardPage() {
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Review queue</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {rows.length} post{rows.length === 1 ? "" : "s"} awaiting review
             (flagged or draft)
           </p>
@@ -52,13 +52,13 @@ export default async function AdminDashboardPage() {
       </header>
 
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">
+        <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           Nothing to review. 🎉
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full border-collapse text-left text-sm">
-            <thead className="bg-zinc-100 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900">
+            <thead className="bg-muted text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -78,12 +78,12 @@ export default async function AdminDashboardPage() {
                 return (
                   <tr
                     key={row.id}
-                    className="border-t border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
+                    className="border-t border-border hover:bg-muted"
                   >
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/review/${row.id}`}
-                        className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        className="font-medium text-primary hover:underline"
                       >
                         {row.title ?? "(untitled)"}
                       </Link>
@@ -91,27 +91,27 @@ export default async function AdminDashboardPage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={row.status} />
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {row.primaryKeyword ?? "—"}
                     </td>
                     <td className="px-4 py-3">
                       {failed.length === 0 ? (
-                        <span className="text-emerald-600 dark:text-emerald-400">
+                        <span className="text-emerald-600">
                           all passed
                         </span>
                       ) : (
-                        <span className="text-amber-700 dark:text-amber-400">
+                        <span className="text-amber-700">
                           {failed.join(", ")}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {trend?.trend_score ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {trend?.keyword_difficulty ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {row.createdAt.toLocaleString()}
                     </td>
                   </tr>

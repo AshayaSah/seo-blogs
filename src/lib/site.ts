@@ -4,7 +4,7 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
 
-export const SITE_NAME = "Saastra Labs";
+export const SITE_NAME = "Saastra Labs Blogs";
 
 export const SITE_DESCRIPTION =
   "AI-assisted articles on SEO, search, and content strategy.";
@@ -13,7 +13,7 @@ export const SITE_DESCRIPTION =
 export const ORGANIZATION = {
   name: SITE_NAME,
   url: SITE_URL,
-  logo: `${SITE_URL}/next.svg`,
+  logo: `${SITE_URL}/logo.png`,
 };
 
 /** Turn arbitrary text (e.g. a category name) into a URL-safe slug. */
@@ -26,4 +26,6 @@ export function slugify(input: string): string {
 }
 
 export const absoluteUrl = (path: string): string =>
-  path.startsWith("http") ? path : `${SITE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
+  path.startsWith("http")
+    ? path
+    : `${SITE_URL}${path.startsWith("/") ? "" : "/"}${path}`;

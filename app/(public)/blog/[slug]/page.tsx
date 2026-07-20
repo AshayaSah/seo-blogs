@@ -112,10 +112,10 @@ export default async function BlogPostPage({
       {faq.length > 0 && <JsonLd data={faqJsonLd(faq)} />}
 
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-zinc-500">
+      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
-            <Link href="/" className="hover:underline">
+            <Link href="/" className="hover:text-foreground">
               {SITE_NAME}
             </Link>
           </li>
@@ -125,7 +125,7 @@ export default async function BlogPostPage({
               <li>
                 <Link
                   href={`/category/${slugify(post.category)}`}
-                  className="hover:underline"
+                  className="hover:text-foreground"
                 >
                   {post.category}
                 </Link>
@@ -133,7 +133,7 @@ export default async function BlogPostPage({
             </>
           )}
           <li aria-hidden>›</li>
-          <li className="text-zinc-700 dark:text-zinc-300" aria-current="page">
+          <li className="text-foreground" aria-current="page">
             {post.title}
           </li>
         </ol>
@@ -145,14 +145,14 @@ export default async function BlogPostPage({
             {post.title}
           </h1>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
+          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
             {author && (
               <span>
                 By{" "}
                 <Link
                   href={`/author/${author.slug}`}
                   rel="author"
-                  className="font-medium text-zinc-700 hover:underline dark:text-zinc-300"
+                  className="font-medium text-foreground hover:text-primary"
                 >
                   {author.name}
                 </Link>
@@ -182,7 +182,7 @@ export default async function BlogPostPage({
             width={image.width}
             height={image.height}
             style={{ width: "100%", height: "auto" }}
-            className="mb-8 rounded-xl border border-zinc-200 dark:border-zinc-800"
+            className="mb-8 rounded-xl border border-border"
           />
         )}
 
@@ -190,11 +190,11 @@ export default async function BlogPostPage({
         {takeaways.length > 0 && (
           <section
             aria-labelledby="key-takeaways"
-            className="mb-10 rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900/40"
+            className="mb-10 rounded-xl border border-border bg-muted p-6"
           >
             <h2
               id="key-takeaways"
-              className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500"
+              className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground"
             >
               Key takeaways
             </h2>
@@ -228,11 +228,11 @@ export default async function BlogPostPage({
             <h2 id="faq" className="mb-4 text-2xl font-semibold">
               Frequently asked questions
             </h2>
-            <div className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+            <div className="flex flex-col divide-y divide-border">
               {faq.map((item, i) => (
                 <div key={i} className="py-4">
                   <h3 className="font-medium">{item.question}</h3>
-                  <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-1 text-muted-foreground">
                     {item.answer}
                   </p>
                 </div>
@@ -253,13 +253,13 @@ export default async function BlogPostPage({
               <li key={r.slug}>
                 <Link
                   href={`/blog/${r.slug}`}
-                  className="block rounded-lg border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50"
+                  className="block rounded-lg border border-border p-4 transition-colors hover:bg-muted"
                 >
-                  <span className="font-medium text-blue-600 dark:text-blue-400">
+                  <span className="font-medium text-primary">
                     {r.title}
                   </span>
                   {r.metaDescription && (
-                    <span className="mt-1 block text-sm text-zinc-500">
+                    <span className="mt-1 block text-sm text-muted-foreground">
                       {r.metaDescription}
                     </span>
                   )}

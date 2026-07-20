@@ -47,7 +47,7 @@ export default async function TagPage({
   const posts = await getPostsByTag(found.slug);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <div className="site-container py-10">
       <JsonLd
         data={breadcrumbTrailJsonLd([
           { name: SITE_NAME, url: absoluteUrl("/") },
@@ -56,20 +56,20 @@ export default async function TagPage({
         ])}
       />
 
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-zinc-500">
+      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
         <ol className="flex flex-wrap items-center gap-1.5">
-          <li><Link href="/" className="hover:underline">{SITE_NAME}</Link></li>
+          <li><Link href="/" className="hover:text-foreground">{SITE_NAME}</Link></li>
           <li aria-hidden>›</li>
-          <li><Link href="/blog" className="hover:underline">Blog</Link></li>
+          <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
           <li aria-hidden>›</li>
-          <li className="text-zinc-700 dark:text-zinc-300" aria-current="page">
+          <li className="text-foreground" aria-current="page">
             #{found.name}
           </li>
         </ol>
       </nav>
 
       <h1 className="text-3xl font-bold tracking-tight">#{found.name}</h1>
-      <p className="mt-2 text-zinc-500">
+      <p className="mt-2 text-muted-foreground">
         {posts.length} post{posts.length === 1 ? "" : "s"} tagged.
       </p>
 

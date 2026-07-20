@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
   return (
     <div className="mx-auto mt-24 max-w-sm">
       <h1 className="text-xl font-semibold tracking-tight">Admin sign in</h1>
-      <p className="mt-1 text-sm text-zinc-500">
+      <p className="mt-1 text-sm text-muted-foreground">
         Enter the admin password to review posts.
       </p>
       <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3">
@@ -48,13 +48,13 @@ export default function AdminLoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+          className="field"
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={loading || password.length === 0}
-          className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-zinc-900"
+          className="btn btn-primary"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>

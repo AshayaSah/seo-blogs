@@ -1,32 +1,209 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Design tokens — the ONE place colors live. Everything (utilities via the
+   @theme mapping below, and the component classes further down) references
+   these variables, so the whole site shares a single, consistent palette.
+   Light only by design: no dark mode.
+--------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --background: #ffffff; /* page background (full-bleed white) */
+  --foreground: #16181d; /* primary text */
+
+  --card: #ffffff; /* panels, cards, surfaces */
+  --card-foreground: #16181d;
+
+  --muted: #f4f5f7; /* subtle fills, hovers, chips */
+  --muted-foreground: #6b7280; /* secondary / meta text */
+
+  --border: #e6e8ec;
+  --input: #dfe2e7;
+  --ring: #2563eb;
+
+  --primary: #2563eb; /* brand blue accent */
+  --primary-hover: #1d4ed8;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eaf1ff; /* light-blue secondary button */
+  --secondary-foreground: #2563eb;
+
+  --radius: 0.75rem;
+  --container: 1180px; /* max content width */
+
+  /* Image cards: dark gradient behind overlaid text + a branded fallback for
+     posts without a featured image. Tune the whole card look from here. */
+  --card-scrim: linear-gradient(
+    to top,
+    rgb(0 0 0 / 0.9) 0%,
+    rgb(0 0 0 / 0.55) 38%,
+    rgb(0 0 0 / 0) 72%
+  );
+  --card-fallback: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
+  --card-aspect: 3 / 4; /* overlay card shape */
 }
 
+/* Map tokens to Tailwind's color utilities so `bg-card`, `text-muted-foreground`,
+   `border-border`, `bg-primary`, `text-primary`, etc. all resolve to the tokens. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* CLS-safe ad slots: reserve height before the ad fills in. Heights come from
-   AdSlot via CSS custom properties, with a per-breakpoint fallback. */
+/* Centered, responsive content width. One place to change the site's max width
+   and gutters — used by the header, footer, and every page. */
+.site-container {
+  width: 100%;
+  max-width: var(--container, 1180px);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+@media (min-width: 640px) {
+  .site-container {
+    padding-inline: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .site-container {
+    padding-inline: 2rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Shared component classes — plain, non-fancy building blocks used across the
+   whole site so buttons / inputs / badges / cards look identical everywhere.
+--------------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #dfeaff;
+}
+
+.btn-outline {
+  background: var(--card);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+/* Text input / textarea */
+.field {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid var(--input);
+  background: var(--card);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  outline: none;
+}
+.field::placeholder {
+  color: var(--muted-foreground);
+}
+.field:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12);
+}
+
+/* Small pill / badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* Surface card */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Image card with overlaid text (the reference blog cards). */
+.post-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  aspect-ratio: var(--card-aspect);
+}
+.post-card-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--card-scrim);
+}
+.post-card-fallback {
+  position: absolute;
+  inset: 0;
+  background: var(--card-fallback);
+}
+/* White pill badge that sits on top of a photo. */
+.badge-on-image {
+  background: rgb(255 255 255 / 0.95);
+  color: var(--foreground);
+}
+
+/* ---------------------------------------------------------------------------
+   CLS-safe ad slots: reserve height before the ad fills in. Heights come from
+   AdSlot via CSS custom properties, with a per-breakpoint fallback.
+--------------------------------------------------------------------------- */
 .ad-slot {
   display: block;
   margin: 2rem auto;
@@ -42,10 +219,13 @@ body {
   }
 }
 
-/* Readable typography for rendered markdown article bodies. */
+/* ---------------------------------------------------------------------------
+   Readable typography for rendered markdown article bodies.
+--------------------------------------------------------------------------- */
 .article-content {
   line-height: 1.75;
   font-size: 1.0625rem;
+  color: var(--foreground);
 }
 .article-content h2 {
   margin-top: 2rem;
@@ -78,25 +258,25 @@ body {
   list-style: decimal;
 }
 .article-content a {
-  color: #2563eb;
+  color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .article-content blockquote {
-  border-left: 3px solid #d4d4d8;
+  border-left: 3px solid var(--border);
   padding-left: 1rem;
-  color: #52525b;
+  color: var(--muted-foreground);
   font-style: italic;
 }
 .article-content code {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.9em;
-  background: rgba(127, 127, 127, 0.12);
+  background: var(--muted);
   padding: 0.1em 0.35em;
   border-radius: 4px;
 }
 .article-content pre {
-  background: rgba(127, 127, 127, 0.12);
+  background: var(--muted);
   padding: 1rem;
   border-radius: 8px;
   overflow-x: auto;
@@ -104,13 +284,4 @@ body {
 .article-content pre code {
   background: transparent;
   padding: 0;
-}
-@media (prefers-color-scheme: dark) {
-  .article-content a {
-    color: #60a5fa;
-  }
-  .article-content blockquote {
-    border-left-color: #3f3f46;
-    color: #a1a1aa;
-  }
 }

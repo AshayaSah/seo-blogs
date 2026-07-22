@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
   id: string;
+  slug: string;
   initialTitle: string;
   initialMetaDescription: string;
   initialContentBody: string;
@@ -15,6 +17,7 @@ type Feedback = { kind: "ok" | "error"; text: string } | null;
 
 export default function ReviewEditor({
   id,
+  slug,
   initialTitle,
   initialMetaDescription,
   initialContentBody,
@@ -28,6 +31,7 @@ export default function ReviewEditor({
   const [contentBody, setContentBody] = useState(initialContentBody);
   const [busy, setBusy] = useState<null | "save" | "approve" | "reject">(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const isPublished = status === "published";
 
   const dirty =
     title !== initialTitle ||
@@ -48,7 +52,12 @@ export default function ReviewEditor({
         }),
       });
       if (res.ok) {
-        setFeedback({ kind: "ok", text: "Edits saved." });
+        setFeedback({
+          kind: "ok",
+          text: isPublished
+            ? "Edits saved — live page updated."
+            : "Edits saved.",
+        });
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -60,6 +69,13 @@ export default function ReviewEditor({
   }
 
   async function act(action: "approve" | "reject") {
+    if (action === "reject" && isPublished) {
+      const confirmed = window.confirm(
+        "Unpublish this post? It will come down from the live site immediately and move back to draft.",
+      );
+      if (!confirmed) return;
+    }
+
     setBusy(action);
     setFeedback(null);
     try {
@@ -73,7 +89,9 @@ export default function ReviewEditor({
           text:
             action === "approve"
               ? "Approved — now published."
-              : "Rejected — moved back to draft.",
+              : isPublished
+                ? "Unpublished — moved back to draft."
+                : "Rejected — moved back to draft.",
         });
         router.refresh();
       } else {
@@ -147,21 +165,43 @@ export default function ReviewEditor({
           {busy === "save" ? "Saving…" : "Save edits"}
         </button>
 
-        <button
-          onClick={() => act("approve")}
-          disabled={busy !== null}
-          className="btn bg-emerald-600 text-white hover:bg-emerald-700"
-        >
-          {busy === "approve" ? "Approving…" : "Approve & publish"}
-        </button>
+        {isPublished ? (
+          <>
+            <Link
+              href={`/blog/${slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-outline"
+            >
+              View live ↗
+            </Link>
+            <button
+              onClick={() => act("reject")}
+              disabled={busy !== null}
+              className="btn bg-red-600 text-white hover:bg-red-700"
+            >
+              {busy === "reject" ? "Unpublishing…" : "Unpublish"}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => act("approve")}
+              disabled={busy !== null}
+              className="btn bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              {busy === "approve" ? "Approving…" : "Approve & publish"}
+            </button>
 
-        <button
-          onClick={() => act("reject")}
-          disabled={busy !== null}
-          className="btn bg-red-600 text-white hover:bg-red-700"
-        >
-          {busy === "reject" ? "Rejecting…" : "Reject"}
-        </button>
+            <button
+              onClick={() => act("reject")}
+              disabled={busy !== null}
+              className="btn bg-red-600 text-white hover:bg-red-700"
+            >
+              {busy === "reject" ? "Rejecting…" : "Reject"}
+            </button>
+          </>
+        )}
 
         <span className="ml-auto text-xs text-muted-foreground">
           Current status: {status}

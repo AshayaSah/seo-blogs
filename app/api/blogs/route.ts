@@ -216,8 +216,12 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (err) {
-    // Unique violation on agent_content_id or slug (Postgres 23505).
-    const code = (err as { code?: string })?.code;
+    // Unique violation on agent_content_id or slug (Postgres 23505). The Neon
+    // driver wraps the actual pg error under `.cause` rather than throwing it
+    // directly, so check both shapes.
+    type PgError = { code?: string; cause?: { code?: string } };
+    const pgErr = err as PgError;
+    const code = pgErr?.code ?? pgErr?.cause?.code;
     if (code === "23505") {
       return NextResponse.json(
         { error: "A post with this agent_content_id or slug already exists" },

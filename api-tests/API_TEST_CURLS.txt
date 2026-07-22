@@ -1,0 +1,175 @@
+================================================================================
+ SEO Blogs — /api/blogs test curls
+ Endpoints under test:
+   GET  /api/blogs   -> validation criteria / patterns for the JSON payload
+   POST /api/blogs   -> ingest a post (validate -> quality gate -> publish/flag)
+================================================================================
+
+SETUP
+--------------------------------------------------------------------------------
+1. Start the dev server (from the repo root):
+     bun dev
+   Default base URL: http://localhost:3000
+
+2. Set your API key + base URL as shell variables (adjust as needed).
+   The key must match INGEST_API_KEY in your .env.local — note that value is
+   stored there wrapped in double quotes (INGEST_API_KEY="..."), don't include
+   the quote characters when you copy it:
+
+     export BASE_URL="http://localhost:3000"
+     export INGEST_API_KEY="paste-the-unquoted-value-from-.env.local-here"
+
+3. This folder also contains 4 ready-to-use payload files (already verified
+   against the real quality-gate logic, not hand-guessed):
+     good_payload.json    - passes every quality check   -> stored "published"
+     draft_payload.json   - passes every check, but status:"draft" was
+                             explicitly requested -> stored "flagged" anyway
+     thin_payload.json    - schema-valid but fails 5 quality checks
+                             (too short, no FAQ/takeaways, etc.) -> "flagged"
+     invalid_payload.json - missing required fields entirely -> 422, never
+                             reaches the quality gate
+
+   Run curls from *this* directory so the `-d @file.json` paths resolve.
+
+================================================================================
+ TEST 1 — GET /api/blogs, no API key -> 401 Unauthorized
+================================================================================
+curl -i "$BASE_URL/api/blogs"
+
+Expect: HTTP 401, body {"error":"Unauthorized"}
+
+
+================================================================================
+ TEST 2 — GET /api/blogs, with API key -> 200 OK, full spec
+================================================================================
+curl -s -H "x-api-key: $INGEST_API_KEY" "$BASE_URL/api/blogs" | jq
+
+(drop the `| jq` if you don't have jq installed — raw JSON still prints fine)
+
+Expect: HTTP 200 with:
+  - request_schema       JSON Schema generated live from the Zod payload
+                          schema (src/lib/validation.ts) — field types,
+                          required/optional, regex patterns (slug, UUID,
+                          ISO datetime, URL), enums, etc.
+  - quality_gate.checks   the 7 automated checks that decide auto-publish
+                          vs. flagged-for-review, with their thresholds
+  - responses             what 201 / 401 / 409 / 422 look like
+
+Same request also works with the Bearer form instead of x-api-key:
+curl -s -H "Authorization: Bearer $INGEST_API_KEY" "$BASE_URL/api/blogs"
+
+
+================================================================================
+ TEST 3 — POST /api/blogs, no API key -> 401 Unauthorized
+================================================================================
+curl -i -X POST "$BASE_URL/api/blogs" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+Expect: HTTP 401, body {"error":"Unauthorized"}  (never touches validation)
+
+
+================================================================================
+ TEST 4 — POST /api/blogs, empty/garbage body -> 422 Validation failed
+================================================================================
+curl -s -X POST "$BASE_URL/api/blogs" \
+  -H "x-api-key: $INGEST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @invalid_payload.json | jq
+
+Expect: HTTP 422, body:
+  { "error": "Validation failed", "issues": [ { "field": "...", "message": "..." }, ... ] }
+One issue per missing/invalid required field (agent_content_id, slug,
+primary_keyword, tags, author_id, content_body, featured_image, og, ...).
+
+
+================================================================================
+ TEST 5 — POST /api/blogs, clean payload -> 201 Created, status "published"
+================================================================================
+curl -s -X POST "$BASE_URL/api/blogs" \
+  -H "x-api-key: $INGEST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @good_payload.json | jq
+
+Expect: HTTP 201, body:
+  {
+    "id": "<uuid>",
+    "slug": "ultimate-content-marketing-strategy-guide-2026",
+    "status": "published",
+    "quality_report": { "passed": true, "checks": [ ...7 checks, all passed... ] }
+  }
+
+This payload requests status:"published" and clears every quality check
+(title 54 chars, meta description 144 chars, primary_keyword in title/first
+paragraph/image alt, 1116-word body, unique slug/title, 3 key_takeaways +
+2 faq entries, no source_trend_reference so the difficulty guard is skipped),
+so it auto-publishes with no human review.
+
+Side effect worth knowing: on a real publish this also fires IndexNow /
+Google Indexing pings and revalidates cached pages (src/lib/publish-hooks.ts).
+Those calls are fire-and-forget and only log a warning if INDEXNOW_KEY /
+GSC_SERVICE_ACCOUNT_JSON aren't configured — they won't fail the request.
+
+
+================================================================================
+ TEST 6 — re-POST the same payload -> 409 Conflict (duplicate)
+================================================================================
+curl -i -X POST "$BASE_URL/api/blogs" \
+  -H "x-api-key: $INGEST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @good_payload.json
+
+Expect: HTTP 409, body:
+  {"error":"A post with this agent_content_id or slug already exists"}
+(run TEST 5 first — this only makes sense as a repeat submission)
+
+
+================================================================================
+ TEST 7 — POST /api/blogs, explicit status:"draft" -> 201, status "flagged"
+================================================================================
+curl -s -X POST "$BASE_URL/api/blogs" \
+  -H "x-api-key: $INGEST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @draft_payload.json | jq
+
+Expect: HTTP 201, "status": "flagged", "quality_report.passed": true (all 7
+checks pass — this is a different, unique title/slug from good_payload.json
+so it doesn't also trip the near-duplicate-title check).
+Demonstrates that a passing quality report is NOT enough to auto-publish —
+an agent can still force human review by submitting status:"draft".
+
+
+================================================================================
+ TEST 8 — POST /api/blogs, thin/low-quality content -> 201, status "flagged"
+================================================================================
+curl -s -X POST "$BASE_URL/api/blogs" \
+  -H "x-api-key: $INGEST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d @thin_payload.json | jq
+
+Expect: HTTP 201 (schema is valid, so it's still accepted and stored), but
+"status": "flagged" and "quality_report.passed": false, with these checks
+failing: title_length, meta_description_length, primary_keyword_placement,
+content_word_count, aeo_extractability. Shows the difference between a
+*rejected* payload (422, TEST 4) and an *accepted-but-flagged* one (this).
+
+
+================================================================================
+ CLEANUP (optional)
+================================================================================
+Posts created by TEST 5/7/8 live in the `posts` table. Review/approve/reject
+them via the admin UI (http://localhost:3000/admin, after logging in), or
+delete directly:
+
+  bun -e "
+  const { db } = await import('./src/db/index.ts');
+  const { posts } = await import('./src/db/schema.ts');
+  const { inArray } = await import('drizzle-orm');
+  await db.delete(posts).where(inArray(posts.agentContentId, [
+    'agent-demo-content-marketing-strategy-01',
+    'agent-demo-content-marketing-strategy-02-draft',
+    'agent-demo-thin-content-01',
+  ]));
+  console.log('cleaned up');
+  "
+================================================================================

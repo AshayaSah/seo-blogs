@@ -1,0 +1,30 @@
+{
+  "agent_content_id": "agent-demo-thin-content-01",
+  "status": "published",
+  "title": "Content Tips",
+  "slug": "content-tips-thin-demo",
+  "primary_keyword": "content marketing strategy",
+  "category": "Marketing",
+  "tags": [
+    "content-marketing"
+  ],
+  "author_id": "e25043e1-2086-4c49-9c6a-798e2b4d689a",
+  "content_format": "markdown",
+  "content_body": "Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters. Content marketing matters.  This short article briefly mentions content marketing strategy once and stops.",
+  "read_time_minutes": 1,
+  "meta_description": "Short tips.",
+  "featured_image": {
+    "url": "https://images.example.com/generic.jpg",
+    "alt_text": "generic image",
+    "width": 800,
+    "height": 450
+  },
+  "canonical_url": "https://saastralabs.com/blog/content-tips-thin-demo",
+  "og": {
+    "title": "Content Tips",
+    "description": "Short tips.",
+    "type": "article"
+  },
+  "structured_data_type": "Article",
+  "language": "en"
+}

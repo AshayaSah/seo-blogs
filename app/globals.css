@@ -71,6 +71,13 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Everything below lives in the `components` layer (below Tailwind's
+   `utilities` layer in @import "tailwindcss"'s layer order) so that utility
+   classes like `md:hidden` always win when combined with these classes —
+   e.g. `className="btn btn-outline md:hidden"`. Unlayered CSS would otherwise
+   beat layered utilities regardless of source order or specificity. */
+@layer components {
+
 /* Centered, responsive content width. One place to change the site's max width
    and gutters — used by the header, footer, and every page. */
 .site-container {
@@ -285,3 +292,5 @@ body {
   background: transparent;
   padding: 0;
 }
+
+} /* @layer components */

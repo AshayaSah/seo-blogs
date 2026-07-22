@@ -30,13 +30,13 @@ export default function SiteHeader({ categories }: { categories: Taxonomy[] }) {
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-lg font-bold tracking-tight">
-              {SITE_NAME}
+              Saastra
             </span>
             <Image
-              src="/logo.png" // Place your logo in the public folder
+              src="/logo.svg"
               alt={SITE_NAME}
-              width={40}
-              height={40}
+              width={36}
+              height={36}
               className="object-contain"
               priority
             />
@@ -77,7 +77,7 @@ export default function SiteHeader({ categories }: { categories: Taxonomy[] }) {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label="Toggle menu"
-          className="btn btn-outline md:hidden"
+          className="flex btn btn-outline md:hidden"
         >
           Menu
         </button>

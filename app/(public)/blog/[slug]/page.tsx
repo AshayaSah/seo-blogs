@@ -11,11 +11,7 @@ import {
   type Og,
 } from "@/src/lib/posts";
 import { renderMarkdown } from "@/src/lib/markdown";
-import {
-  articleJsonLd,
-  breadcrumbJsonLd,
-  faqJsonLd,
-} from "@/src/lib/jsonld";
+import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/src/lib/jsonld";
 import { SITE_NAME, absoluteUrl, slugify } from "@/src/lib/site";
 import { sectionizeForAds } from "@/src/lib/ads/placement";
 import JsonLd from "@/src/components/JsonLd";
@@ -105,14 +101,17 @@ export default async function BlogPostPage({
   });
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="site-container px-6 py-12">
       {/* Structured data */}
       <JsonLd data={articleJsonLd(post)} />
       <JsonLd data={breadcrumbJsonLd(post)} />
       {faq.length > 0 && <JsonLd data={faqJsonLd(faq)} />}
 
       {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 text-sm text-muted-foreground"
+      >
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
             <Link href="/" className="hover:text-foreground">
@@ -232,9 +231,7 @@ export default async function BlogPostPage({
               {faq.map((item, i) => (
                 <div key={i} className="py-4">
                   <h3 className="font-medium">{item.question}</h3>
-                  <p className="mt-1 text-muted-foreground">
-                    {item.answer}
-                  </p>
+                  <p className="mt-1 text-muted-foreground">{item.answer}</p>
                 </div>
               ))}
             </div>
@@ -255,9 +252,7 @@ export default async function BlogPostPage({
                   href={`/blog/${r.slug}`}
                   className="block rounded-lg border border-border p-4 transition-colors hover:bg-muted"
                 >
-                  <span className="font-medium text-primary">
-                    {r.title}
-                  </span>
+                  <span className="font-medium text-primary">{r.title}</span>
                   {r.metaDescription && (
                     <span className="mt-1 block text-sm text-muted-foreground">
                       {r.metaDescription}

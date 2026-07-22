@@ -1,18 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
 import { db } from "@/src/db";
 import { posts } from "@/src/db/schema";
 import { blogPayloadSchema } from "@/src/lib/validation";
 import {
   runQualityGate,
   decideStatus,
+  QUALITY_GATE_THRESHOLDS,
   type ExistingPostRef,
 } from "@/src/lib/quality-gate";
 import { onPublish } from "@/src/lib/publish-hooks";
 
 /**
+ * GET /api/blogs  — validation criteria + patterns for the JSON payload, so
+ *                    an agent can self-check a draft before submitting it.
  * POST /api/blogs — ingest endpoint for the content agent.
  *
- * Contract:
+ * POST contract:
  *   1. Authenticate with a shared key (`x-api-key` or `Authorization: Bearer`).
  *   2. Validate the payload shape (Zod).
  *   3. Run the quality gate against existing posts.
@@ -31,6 +35,90 @@ function isAuthorized(request: NextRequest): boolean {
     : undefined;
 
   return headerKey === expected || bearer === expected;
+}
+
+const { titleLength, metaDescriptionLength, minContentWords, maxKeywordDifficulty } =
+  QUALITY_GATE_THRESHOLDS;
+
+export async function GET(request: NextRequest) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return NextResponse.json({
+    endpoint: "POST /api/blogs",
+    authentication: {
+      methods: [
+        "x-api-key: <key>",
+        "Authorization: Bearer <key>",
+      ],
+    },
+    request_schema: z.toJSONSchema(blogPayloadSchema),
+    quality_gate: {
+      description:
+        "Every submission is scored against these automated checks. A " +
+        "submission that passes all of them, and was not submitted with " +
+        "status \"draft\", is auto-published; otherwise it's inserted as " +
+        "\"flagged\" and queued for human review in the admin panel. The " +
+        "decided status and the full check report are returned in the " +
+        "POST response as `status` and `quality_report`.",
+      checks: [
+        {
+          name: "title_length",
+          rule: `title must be ${titleLength.min}–${titleLength.max} characters`,
+        },
+        {
+          name: "meta_description_length",
+          rule: `meta_description must be ${metaDescriptionLength.min}–${metaDescriptionLength.max} characters`,
+        },
+        {
+          name: "primary_keyword_placement",
+          rule:
+            "primary_keyword must (case-insensitively) appear in title, " +
+            "in the first paragraph of content_body, and in " +
+            "featured_image.alt_text",
+        },
+        {
+          name: "content_word_count",
+          rule: `content_body must be at least ${minContentWords} words`,
+        },
+        {
+          name: "slug_and_title_unique",
+          rule:
+            "slug must not already exist, and title must not " +
+            "near-duplicate (case/punctuation-insensitive) an existing post's title",
+        },
+        {
+          name: "aeo_extractability",
+          rule: "key_takeaways and faq must each have at least 1 entry",
+        },
+        {
+          name: "keyword_difficulty_guard",
+          rule:
+            `if source_trend_reference.keyword_difficulty is present, it ` +
+            `must be ≤ ${maxKeywordDifficulty} (omit source_trend_reference ` +
+            "entirely to skip this check)",
+        },
+      ],
+    },
+    responses: {
+      "201": {
+        description: "Post created.",
+        body: {
+          id: "uuid",
+          slug: "string",
+          status: '"published" | "flagged"',
+          quality_report: "{ passed: boolean, checks: QualityCheck[] }",
+        },
+      },
+      "401": "Missing or incorrect API key.",
+      "409": "agent_content_id or slug already exists.",
+      "422": {
+        description: "Payload failed schema validation.",
+        body: { error: "string", issues: "{ field: string, message: string }[]" },
+      },
+    },
+  });
 }
 
 // timestamptz columns take Date objects; payload sends ISO strings or null.

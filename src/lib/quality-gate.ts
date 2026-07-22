@@ -1,6 +1,20 @@
 import type { BlogPayload } from "./validation";
 
 // ---------------------------------------------------------------------------
+// Thresholds — the single source of truth for both the gate itself and the
+// agent-facing docs served from `GET /api/blogs`, so the two can't drift.
+// ---------------------------------------------------------------------------
+
+export const QUALITY_GATE_THRESHOLDS = {
+  titleLength: { min: 50, max: 60 },
+  metaDescriptionLength: { min: 140, max: 160 },
+  minContentWords: 800,
+  minKeyTakeaways: 1,
+  minFaqEntries: 1,
+  maxKeywordDifficulty: 40,
+} as const;
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -65,19 +79,22 @@ export function runQualityGate(
   const checks: QualityCheck[] = [];
 
   // 1. Title length 50–60 chars.
+  const { min: titleMin, max: titleMax } = QUALITY_GATE_THRESHOLDS.titleLength;
   const titleLen = payload.title.length;
   checks.push({
     name: "title_length",
-    passed: titleLen >= 50 && titleLen <= 60,
-    detail: `title is ${titleLen} chars (want 50–60)`,
+    passed: titleLen >= titleMin && titleLen <= titleMax,
+    detail: `title is ${titleLen} chars (want ${titleMin}–${titleMax})`,
   });
 
   // 2. Meta description length 140–160 chars.
+  const { min: metaMin, max: metaMax } =
+    QUALITY_GATE_THRESHOLDS.metaDescriptionLength;
   const metaLen = payload.meta_description.length;
   checks.push({
     name: "meta_description_length",
-    passed: metaLen >= 140 && metaLen <= 160,
-    detail: `meta_description is ${metaLen} chars (want 140–160)`,
+    passed: metaLen >= metaMin && metaLen <= metaMax,
+    detail: `meta_description is ${metaLen} chars (want ${metaMin}–${metaMax})`,
   });
 
   // 3. primary_keyword appears in title, first paragraph, and an image alt.
@@ -100,12 +117,13 @@ export function runQualityGate(
         : `"${kw}" missing from: ${missing.join(", ")}`,
   });
 
-  // 4. Word count of content_body ≥ 800.
+  // 4. Word count of content_body ≥ minContentWords.
+  const { minContentWords } = QUALITY_GATE_THRESHOLDS;
   const words = wordCount(payload.content_body);
   checks.push({
     name: "content_word_count",
-    passed: words >= 800,
-    detail: `content_body has ${words} words (want ≥ 800)`,
+    passed: words >= minContentWords,
+    detail: `content_body has ${words} words (want ≥ ${minContentWords})`,
   });
 
   // 5. Slug unused and title not a near-duplicate of an existing post.
@@ -126,26 +144,28 @@ export function runQualityGate(
   });
 
   // 6. At least one key_takeaway AND one faq entry (AEO extractability).
+  const { minKeyTakeaways, minFaqEntries } = QUALITY_GATE_THRESHOLDS;
   const takeaways = payload.key_takeaways?.length ?? 0;
   const faqs = payload.faq?.length ?? 0;
   checks.push({
     name: "aeo_extractability",
-    passed: takeaways >= 1 && faqs >= 1,
-    detail: `key_takeaways: ${takeaways}, faq: ${faqs} (want ≥ 1 of each)`,
+    passed: takeaways >= minKeyTakeaways && faqs >= minFaqEntries,
+    detail: `key_takeaways: ${takeaways}, faq: ${faqs} (want ≥ ${minKeyTakeaways} of each)`,
   });
 
   // 7. Keyword-difficulty guard: a young domain shouldn't auto-publish hard
-  //    terms. Fails only when a trend reference reports difficulty > 40.
+  //    terms. Fails only when a trend reference reports difficulty above the max.
+  const { maxKeywordDifficulty } = QUALITY_GATE_THRESHOLDS;
   const kd = payload.source_trend_reference?.keyword_difficulty;
   checks.push({
     name: "keyword_difficulty_guard",
-    passed: kd === undefined || kd <= 40,
+    passed: kd === undefined || kd <= maxKeywordDifficulty,
     detail:
       kd === undefined
         ? "no source_trend_reference; difficulty guard not applicable"
-        : kd > 40
-          ? `keyword_difficulty ${kd} exceeds 40 (too hard to auto-publish)`
-          : `keyword_difficulty ${kd} within limit (≤ 40)`,
+        : kd > maxKeywordDifficulty
+          ? `keyword_difficulty ${kd} exceeds ${maxKeywordDifficulty} (too hard to auto-publish)`
+          : `keyword_difficulty ${kd} within limit (≤ ${maxKeywordDifficulty})`,
   });
 
   return {

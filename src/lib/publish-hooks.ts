@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createSign } from "node:crypto";
 import { SITE_URL, absoluteUrl, slugify } from "./site";
 
@@ -42,19 +42,27 @@ export function onPublish(post: PublishablePost): void {
 // 1) Revalidation
 // ---------------------------------------------------------------------------
 
-function revalidateForPost(post: PublishablePost): void {
+export function revalidateForPost(post: PublishablePost): void {
   const paths = new Set<string>([
     `/blog/${post.slug}`, // the post itself
     "/blog", // blog index (when it exists)
     "/", // home
   ]);
-  if (post.category) paths.add(`/category/${slugify(post.category)}`);
-  for (const tag of post.tags ?? []) paths.add(`/tag/${slugify(tag)}`);
+  if (post.category) paths.add(`/blog/category/${slugify(post.category)}`);
+  for (const tag of post.tags ?? []) paths.add(`/blog/tag/${slugify(tag)}`);
 
   for (const path of paths) revalidatePath(path);
   // The sitemap and llms.txt both enumerate published posts — refresh them too.
   revalidatePath("/sitemap.xml");
   revalidatePath("/llms.txt");
+
+  // Every DB query is tagged "db" (see src/db/index.ts) so this busts the
+  // Data Cache for the actual query results too — without it, revalidatePath
+  // would force a fresh render of the right page but that render could still
+  // read a stale cached DB response. `{ expire: 0 }` (rather than the default
+  // "max" stale-while-revalidate profile) is what Next recommends for a
+  // Route Handler that needs the change visible on the very next request.
+  revalidateTag("db", { expire: 0 });
 }
 
 // ---------------------------------------------------------------------------

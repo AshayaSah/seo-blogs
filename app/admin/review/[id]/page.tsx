@@ -5,6 +5,7 @@ import { db } from "@/src/db";
 import { posts } from "@/src/db/schema";
 import { requireAdminPage } from "@/src/lib/admin-guard";
 import type { QualityReport } from "@/src/lib/quality-gate";
+import AdminNav, { type AdminTab } from "../../AdminNav";
 import StatusBadge from "../../StatusBadge";
 import ReviewEditor from "./ReviewEditor";
 
@@ -29,14 +30,18 @@ export default async function ReviewPage({
     detected_at?: string;
   } | null;
 
+  const isPublished = post.status === "published";
+  const backHref = isPublished ? "/admin?tab=published" : "/admin";
+  const backLabel = isPublished ? "← Back to published posts" : "← Back to queue";
+  const activeTab: AdminTab = isPublished ? "published" : "queue";
+
   return (
     <div>
+      <AdminNav active={activeTab} />
+
       <div className="mb-6 flex items-center justify-between">
-        <Link
-          href="/admin"
-          className="text-sm text-primary hover:underline"
-        >
-          ← Back to queue
+        <Link href={backHref} className="text-sm text-primary hover:underline">
+          {backLabel}
         </Link>
         <StatusBadge status={post.status} />
       </div>
@@ -46,6 +51,7 @@ export default async function ReviewPage({
         <div>
           <ReviewEditor
             id={post.id}
+            slug={post.slug}
             initialTitle={post.title ?? ""}
             initialMetaDescription={post.metaDescription ?? ""}
             initialContentBody={post.contentBody ?? ""}
@@ -79,6 +85,12 @@ export default async function ReviewPage({
                 value={trend?.keyword_difficulty?.toString()}
               />
               <Detail label="Created" value={post.createdAt.toLocaleString()} />
+              {post.publishedAt && (
+                <Detail
+                  label="Published"
+                  value={post.publishedAt.toLocaleString()}
+                />
+              )}
             </dl>
           </section>
 

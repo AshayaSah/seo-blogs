@@ -1,4 +1,5 @@
 import { ORGANIZATION, SITE_NAME, SITE_URL, absoluteUrl, slugify } from "./site";
+import { stripMarkdown } from "./markdown";
 import type { FaqItem, FeaturedImage, PostWithAuthor } from "./posts";
 import type { SelectAuthor } from "@/src/db/schema";
 
@@ -33,12 +34,19 @@ export function articleJsonLd(post: PostWithAuthor): Json {
   const image = post.featuredImage as FeaturedImage | null;
   const author = post.author;
 
+  const allImages = [
+    ...(image ? [image.url] : []),
+    ...((post.images as { url: string }[] | null) ?? []).map((i) => i.url),
+    ...((post.contentSections as { image?: { url: string } | null }[] | null) ?? [])
+      .flatMap((s) => (s.image ? [s.image.url] : [])),
+  ];
+
   return {
     "@context": "https://schema.org",
     "@type": post.structuredDataType ?? "Article",
-    headline: post.title ?? undefined,
+    headline: post.title ? stripMarkdown(post.title) : undefined,
     description: post.metaDescription ?? undefined,
-    image: image ? [image.url] : undefined,
+    image: allImages.length > 0 ? allImages : undefined,
     datePublished: post.publishedAt?.toISOString(),
     dateModified: (post.updatedAt ?? post.publishedAt)?.toISOString(),
     inLanguage: post.language ?? "en",
@@ -77,7 +85,7 @@ export function breadcrumbJsonLd(post: PostWithAuthor): Json {
     });
   }
   items.push({
-    name: post.title ?? "Article",
+    name: post.title ? stripMarkdown(post.title) : "Article",
     url: post.canonicalUrl ?? absoluteUrl(`/blog/${post.slug}`),
   });
 

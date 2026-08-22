@@ -22,19 +22,22 @@ function failedChecks(report: QualityReport | null): string[] {
 }
 
 function parseTab(value: string | undefined): AdminTab {
-  return value === "published" || value === "all" ? value : "queue";
+  if (value === "published" || value === "all" || value === "settings") return value;
+  return "queue";
 }
 
 const HEADING: Record<AdminTab, string> = {
   queue: "Review queue",
   published: "Published posts",
   all: "All posts",
+  settings: "Settings",
 };
 
 const SUBTITLE: Record<AdminTab, string> = {
   queue: "Flagged or draft posts awaiting a human decision.",
   published: "Live on the site. Edit content or unpublish.",
   all: "Every post, regardless of status.",
+  settings: "Control how incoming agent submissions are handled.",
 };
 
 export default async function AdminDashboardPage({

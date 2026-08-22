@@ -10,12 +10,13 @@ import {
   type FeaturedImage,
   type Og,
 } from "@/src/lib/posts";
-import { renderMarkdown } from "@/src/lib/markdown";
+import { renderMarkdown, renderInlineMarkdown, stripMarkdown } from "@/src/lib/markdown";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/src/lib/jsonld";
 import { SITE_NAME, absoluteUrl, slugify } from "@/src/lib/site";
-import { sectionizeForAds } from "@/src/lib/ads/placement";
+import { sectionizeForAds, sectionizeForAdsFromSections } from "@/src/lib/ads/placement";
 import JsonLd from "@/src/components/JsonLd";
 import AdSlot from "@/src/components/ads/AdSlot";
+import TableOfContents from "@/src/components/TableOfContents";
 
 // ISR: prebuild published posts, revalidate hourly, and render newly published
 // slugs on demand (dynamicParams defaults to true).
@@ -39,7 +40,7 @@ export async function generateMetadata({
   const og = (post.og as Og | null) ?? {};
   const image = post.featuredImage as FeaturedImage | null;
   const canonical = post.canonicalUrl ?? absoluteUrl(`/blog/${post.slug}`);
-  const title = og.title ?? post.title ?? SITE_NAME;
+  const title = og.title ?? (post.title ? stripMarkdown(post.title) : SITE_NAME);
   const description = og.description ?? post.metaDescription ?? undefined;
 
   return {
@@ -73,6 +74,42 @@ export async function generateMetadata({
   };
 }
 
+function buildRel(rel?: string | null): string {
+  const parts = ["noopener", "noreferrer"];
+  if (rel === "nofollow" || rel === "sponsored" || rel === "ugc") parts.push(rel);
+  return parts.join(" ");
+}
+
+type ContentSectionImage = {
+  url: string;
+  alt_text: string;
+  width: number;
+  height: number;
+  caption?: string;
+};
+
+type ContentSection = {
+  id: string;
+  title: string;
+  content: string;
+  image?: ContentSectionImage;
+};
+
+type ExternalLink = {
+  label: string;
+  url: string;
+  rel?: "nofollow" | "sponsored" | "ugc" | null;
+  description?: string;
+};
+
+type GalleryImage = {
+  url: string;
+  alt_text: string;
+  width: number;
+  height: number;
+  caption?: string;
+};
+
 export default async function BlogPostPage({
   params,
 }: {
@@ -87,11 +124,17 @@ export default async function BlogPostPage({
   const takeaways = (post.keyTakeaways ?? []) as string[];
   const author = post.author;
   const related = await getRelatedPosts(post.id, post.tags ?? []);
+  const contentSections = (post.contentSections ?? []) as ContentSection[];
+  const externalLinks = (post.externalLinks ?? []) as ExternalLink[];
+  const galleryImages = (post.images ?? []) as GalleryImage[];
+
   const contentHtml = post.contentBody
     ? post.contentFormat === "html"
       ? post.contentBody
       : renderMarkdown(post.contentBody)
     : "";
+
+  const hasModularContent = contentSections.length > 0;
 
   const publishedISO = post.publishedAt?.toISOString();
   const publishedLabel = post.publishedAt?.toLocaleDateString("en-US", {
@@ -133,16 +176,19 @@ export default async function BlogPostPage({
           )}
           <li aria-hidden>›</li>
           <li className="text-foreground" aria-current="page">
-            {post.title}
+            {post.title ? stripMarkdown(post.title) : "Article"}
           </li>
         </ol>
       </nav>
 
       <article>
         <header className="mb-8">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight">
-            {post.title}
-          </h1>
+          <h1
+            className="text-4xl font-bold leading-tight tracking-tight"
+            dangerouslySetInnerHTML={
+              post.title ? { __html: renderInlineMarkdown(post.title) } : undefined
+            }
+          />
 
           <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
             {author && (
@@ -205,21 +251,96 @@ export default async function BlogPostPage({
           </section>
         )}
 
-        {/* Body — split at headings so in-article ad slots can be
-            interleaved (after 1st heading, mid-article, after 3rd heading).
-            Slots are dormant unless an ad provider is configured. */}
-        {(() => {
-          const { sections, adAfter } = sectionizeForAds(contentHtml);
-          return sections.map((html, i) => (
-            <Fragment key={i}>
-              <div
-                className="article-content"
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
-              {adAfter.has(i) && <AdSlot slot={adAfter.get(i)!} />}
-            </Fragment>
-          ));
-        })()}
+        {hasModularContent ? (
+          <>
+            {/* Modular path: table of contents */}
+            <TableOfContents sections={contentSections} />
+
+            {/* Modular path: content sections with interleaved ad slots */}
+            {(() => {
+              const adAfter = sectionizeForAdsFromSections(contentSections);
+              return contentSections.map((section, i) => (
+                <Fragment key={section.id}>
+                  <section id={section.id} className="scroll-mt-24">
+                    <h2
+                      className="mb-4 text-2xl font-bold leading-tight"
+                      dangerouslySetInnerHTML={{
+                        __html: renderInlineMarkdown(section.title),
+                      }}
+                    />
+                    <div
+                      className="article-content"
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          post.contentFormat === "html"
+                            ? section.content
+                            : renderMarkdown(section.content),
+                      }}
+                    />
+                    {section.image && section.image.url && (
+                      <img
+                        src={section.image.url}
+                        alt={section.image.alt_text}
+                        width={section.image.width}
+                        height={section.image.height}
+                        loading="lazy"
+                        style={{ width: "100%", height: "auto" }}
+                        className="mt-6 rounded-xl border border-border"
+                      />
+                    )}
+                  </section>
+                  {adAfter.has(i) && <AdSlot slot={adAfter.get(i)!} />}
+                </Fragment>
+              ));
+            })()}
+          </>
+        ) : (
+          /* Legacy path: render contentBody exactly as before */
+          (() => {
+            const { sections, adAfter } = sectionizeForAds(contentHtml);
+            return sections.map((html, i) => (
+              <Fragment key={i}>
+                <div
+                  className="article-content"
+                  dangerouslySetInnerHTML={{ __html: html }}
+                />
+                {adAfter.has(i) && <AdSlot slot={adAfter.get(i)!} />}
+              </Fragment>
+            ));
+          })()
+        )}
+
+        {/* Post-level image gallery */}
+        {galleryImages.length > 0 && (
+          <section aria-labelledby="gallery" className="mt-10">
+            <h2
+              id="gallery"
+              className="mb-4 text-2xl font-semibold"
+            >
+              Gallery
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {galleryImages.map((img, i) => (
+                <figure key={i}>
+                  <img
+                    src={img.url}
+                    alt={img.alt_text}
+                    width={img.width}
+                    height={img.height}
+                    loading="lazy"
+                    style={{ width: "100%", height: "auto" }}
+                    className="rounded-lg border border-border"
+                  />
+                  {img.caption && (
+                    <figcaption className="mt-2 text-sm text-muted-foreground">
+                      {img.caption}
+                    </figcaption>
+                  )}
+                </figure>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* FAQ */}
         {faq.length > 0 && (
@@ -235,6 +356,34 @@ export default async function BlogPostPage({
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* External links — "Further reading" */}
+        {externalLinks.length > 0 && (
+          <section aria-labelledby="further-reading" className="mt-12">
+            <h2 id="further-reading" className="mb-4 text-2xl font-semibold">
+              Further reading
+            </h2>
+            <ul className="flex flex-col gap-3">
+              {externalLinks.map((link, i) => (
+                <li key={i} className="rounded-lg border border-border p-4">
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel={buildRel(link.rel)}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    <span dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(link.label) }} />
+                  </a>
+                  {link.description && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {link.description}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </article>

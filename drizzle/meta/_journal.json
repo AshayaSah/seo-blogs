@@ -15,6 +15,13 @@
       "when": 1783596419172,
       "tag": "0001_funny_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787119197329,
+      "tag": "0002_nostalgic_roulette",
+      "breakpoints": true
     }
   ]
 }

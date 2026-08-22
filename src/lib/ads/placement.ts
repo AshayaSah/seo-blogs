@@ -46,3 +46,38 @@ export function sectionizeForAds(html: string): {
 
   return { sections, adAfter };
 }
+
+/**
+ * Ad placement for the modular content-sections path. Same ordinal logic as
+ * sectionizeForAds (after 1st heading, mid-article, after 3rd) but keyed on
+ * real section indices instead of regex-split HTML.
+ */
+export function sectionizeForAdsFromSections(
+  sections: { id: string }[],
+): Map<number, string> {
+  const headingIdx = sections.map((_, i) => i);
+  if (headingIdx.length === 0) return new Map();
+
+  const adAfter = new Map<number, string>();
+  const chosen = new Set<number>();
+  const place = (ordinal: number, slot: string) => {
+    const sectionIdx = headingIdx[ordinal];
+    if (sectionIdx === undefined || chosen.has(sectionIdx)) return;
+    chosen.add(sectionIdx);
+    adAfter.set(sectionIdx, slot);
+  };
+
+  place(0, "in-article-1");
+  place(Math.max(1, Math.floor(headingIdx.length / 2)), "in-article-2");
+
+  let thirdOrdinal = 2;
+  while (
+    thirdOrdinal < headingIdx.length &&
+    chosen.has(headingIdx[thirdOrdinal])
+  ) {
+    thirdOrdinal++;
+  }
+  place(thirdOrdinal, "in-article-3");
+
+  return adAfter;
+}

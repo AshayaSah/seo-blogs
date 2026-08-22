@@ -35,6 +35,45 @@ export default async function ReviewPage({
   const backLabel = isPublished ? "← Back to published posts" : "← Back to queue";
   const activeTab: AdminTab = isPublished ? "published" : "queue";
 
+  const featuredImage = post.featuredImage as {
+    url: string;
+    alt_text: string;
+    width: number;
+    height: number;
+    caption?: string;
+    cloudinary_public_id?: string;
+  } | null;
+
+  const contentSections = (post.contentSections ?? []) as {
+    id: string;
+    title: string;
+    content: string;
+    image?: {
+      url: string;
+      alt_text: string;
+      width: number;
+      height: number;
+      caption?: string;
+      cloudinary_public_id?: string;
+    };
+  }[];
+
+  const images = (post.images ?? []) as {
+    url: string;
+    alt_text: string;
+    width: number;
+    height: number;
+    caption?: string;
+    cloudinary_public_id?: string;
+  }[];
+
+  const externalLinks = (post.externalLinks ?? []) as {
+    label: string;
+    url: string;
+    rel?: "nofollow" | "sponsored" | "ugc" | null;
+    description?: string;
+  }[];
+
   return (
     <div>
       <AdminNav active={activeTab} />
@@ -55,6 +94,10 @@ export default async function ReviewPage({
             initialTitle={post.title ?? ""}
             initialMetaDescription={post.metaDescription ?? ""}
             initialContentBody={post.contentBody ?? ""}
+            initialFeaturedImage={featuredImage}
+            initialContentSections={contentSections}
+            initialImages={images}
+            initialExternalLinks={externalLinks}
             status={post.status}
           />
         </div>

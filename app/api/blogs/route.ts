@@ -10,6 +10,9 @@ import {
   type ExistingPostRef,
 } from "@/src/lib/quality-gate";
 import { onPublish } from "@/src/lib/publish-hooks";
+import { getAutoPublishEnabled } from "@/src/lib/settings";
+import { rehostImage, rehostImages, type ImageShape } from "@/src/lib/images";
+import { slugify } from "@/src/lib/site";
 
 /**
  * GET /api/blogs  — validation criteria + patterns for the JSON payload, so
@@ -61,11 +64,13 @@ export async function GET(request: NextRequest) {
         "status \"draft\", is auto-published; otherwise it's inserted as " +
         "\"flagged\" and queued for human review in the admin panel. The " +
         "decided status and the full check report are returned in the " +
-        "POST response as `status` and `quality_report`.",
+        "POST response as `status` and `quality_report`. Submissions may " +
+        "be queued for manual review regardless of quality-gate result, at " +
+        "the operator's discretion.",
       checks: [
         {
           name: "title_length",
-          rule: `title must be ${titleLength.min}–${titleLength.max} characters`,
+          rule: `title must be ${titleLength.min}–${titleLength.max} characters (plain-text length; markdown syntax is stripped before measuring)`,
         },
         {
           name: "meta_description_length",
@@ -75,12 +80,12 @@ export async function GET(request: NextRequest) {
           name: "primary_keyword_placement",
           rule:
             "primary_keyword must (case-insensitively) appear in title, " +
-            "in the first paragraph of content_body, and in " +
-            "featured_image.alt_text",
+            "in the first paragraph of content_body or content_sections, " +
+            "and in featured_image.alt_text",
         },
         {
           name: "content_word_count",
-          rule: `content_body must be at least ${minContentWords} words`,
+          rule: `combined content (content_body or content_sections[].content) must be at least ${minContentWords} words`,
         },
         {
           name: "slug_and_title_unique",
@@ -98,6 +103,13 @@ export async function GET(request: NextRequest) {
             `if source_trend_reference.keyword_difficulty is present, it ` +
             `must be ≤ ${maxKeywordDifficulty} (omit source_trend_reference ` +
             "entirely to skip this check)",
+        },
+        {
+          name: "section_heading_discipline",
+          rule:
+            "when content_sections is used, section content must not " +
+            "contain top-level (# or ##) headings — use ###+ for sub-headings " +
+            "since the section title already becomes the H2",
         },
       ],
     },
@@ -152,13 +164,40 @@ export async function POST(request: NextRequest) {
   }
   const payload = parsed.data;
 
-  // Quality gate needs the existing corpus for slug/title uniqueness.
-  const existing: ExistingPostRef[] = await db
-    .select({ slug: posts.slug, title: posts.title })
-    .from(posts);
+  // Quality gate needs the existing corpus; settings决定 auto-publish toggle.
+  // Fetch both in parallel.
+  const [existing, autoPublishEnabled] = await Promise.all([
+    db
+      .select({ slug: posts.slug, title: posts.title })
+      .from(posts) as Promise<ExistingPostRef[]>,
+    getAutoPublishEnabled(),
+  ]);
+
+  // Re-host agent-submitted images through Cloudinary (fail-open).
+  const [rehostedFeatured, rehostedGallery] = await Promise.all([
+    rehostImage(payload.featured_image as ImageShape),
+    rehostImages((payload.images as ImageShape[] | undefined) ?? []),
+  ]);
+
+  // Re-host section images and server-generate collision-free ids.
+  const sectionSeen = new Map<string, number>();
+  const contentSections = payload.content_sections?.map((s) => {
+    let id = slugify(s.title);
+    const count = sectionSeen.get(id) ?? 0;
+    sectionSeen.set(id, count + 1);
+    if (count > 0) id = `${id}-${count + 1}`;
+
+    const rehImg = s.image ? rehostImage(s.image as ImageShape) : undefined;
+    return rehImg
+      ? rehImg.then((img) => ({ ...s, id, image: img }))
+      : Promise.resolve({ ...s, id });
+  });
+  const resolvedSections = contentSections
+    ? await Promise.all(contentSections)
+    : undefined;
 
   const report = runQualityGate(payload, existing);
-  const status = decideStatus(payload, report);
+  const status = decideStatus(payload, report, autoPublishEnabled);
 
   const publishedAt =
     status === "published"
@@ -179,7 +218,7 @@ export async function POST(request: NextRequest) {
         category: payload.category,
         tags: payload.tags,
         authorId: payload.author_id,
-        featuredImage: payload.featured_image,
+        featuredImage: rehostedFeatured,
         contentFormat: payload.content_format,
         contentBody: payload.content_body,
         readTimeMinutes: payload.read_time_minutes,
@@ -194,6 +233,9 @@ export async function POST(request: NextRequest) {
         sourceTrendReference: payload.source_trend_reference,
         publishedAt,
         scheduledAt: toDate(payload.scheduled_at),
+        images: rehostedGallery.length > 0 ? rehostedGallery : null,
+        externalLinks: payload.external_links ?? null,
+        contentSections: resolvedSections ?? null,
       })
       .returning({ id: posts.id, slug: posts.slug, status: posts.status });
 

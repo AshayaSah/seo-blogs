@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { SITE_NAME } from "@/src/lib/site";
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export default function AboutPage() {
         <h2>Get in touch</h2>
         <p>
           Questions, corrections, or feedback? Visit our{" "}
-          <a href="/contact">contact page</a>.
+          <Link href="/contact">contact page</Link>.
         </p>
       </div>
     </div>

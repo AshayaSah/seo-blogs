@@ -70,6 +70,46 @@ export const posts = pgTable("posts", {
   language: text("language").default("en"),
   qualityReport: jsonb("quality_report"),
   sourceTrendReference: jsonb("source_trend_reference"),
+  /**
+   * Image shape used across multiple jsonb columns (featuredImage, images, contentSections.image):
+   * `{ url: string; alt_text: string; width: number; height: number;
+   *    caption?: string; cloudinary_public_id?: string }`
+   * `cloudinary_public_id` is optional so posts with externally hosted images still validate.
+   */
+  images: jsonb("images").$type<
+    {
+      url: string;
+      alt_text: string;
+      width: number;
+      height: number;
+      caption?: string;
+      cloudinary_public_id?: string;
+    }[]
+  >(),
+  externalLinks: jsonb("external_links").$type<
+    {
+      label: string;
+      url: string;
+      rel?: "nofollow" | "sponsored" | "ugc" | null;
+      description?: string;
+    }[]
+  >(),
+  /** `id` is always server-generated (slugified title, deduped), never trusted from the agent payload directly. */
+  contentSections: jsonb("content_sections").$type<
+    {
+      id: string;
+      title: string;
+      content: string;
+      image?: {
+        url: string;
+        alt_text: string;
+        width: number;
+        height: number;
+        caption?: string;
+        cloudinary_public_id?: string;
+      };
+    }[]
+  >(),
   publishedAt: timestamp("published_at", { withTimezone: true }),
   scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -128,6 +168,21 @@ export const redirects = pgTable("redirects", {
 });
 
 // ---------------------------------------------------------------------------
+// system_settings
+// ---------------------------------------------------------------------------
+// Singleton-style key/value table for runtime toggles and feature flags.
+// Seed conceptually with { key: "auto_publish_enabled", value: true }.
+
+export const systemSettings = pgTable("system_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
+
+// ---------------------------------------------------------------------------
 // Inferred types
 // ---------------------------------------------------------------------------
 
@@ -145,3 +200,6 @@ export type SelectRevenueAnalytics = typeof revenueAnalytics.$inferSelect;
 
 export type InsertRedirect = typeof redirects.$inferInsert;
 export type SelectRedirect = typeof redirects.$inferSelect;
+
+export type InsertSystemSetting = typeof systemSettings.$inferInsert;
+export type SelectSystemSetting = typeof systemSettings.$inferSelect;

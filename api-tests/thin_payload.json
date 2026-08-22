@@ -1,8 +1,8 @@
 {
-  "agent_content_id": "agent-demo-thin-content-01",
+  "agent_content_id": "agent-demo-thin-content-02",
   "status": "published",
   "title": "Content Tips",
-  "slug": "content-tips-thin-demo",
+  "slug": "content-tips-thin-demo-02",
   "primary_keyword": "content marketing strategy",
   "category": "Marketing",
   "tags": [
@@ -19,7 +19,7 @@
     "width": 800,
     "height": 450
   },
-  "canonical_url": "https://saastralabs.com/blog/content-tips-thin-demo",
+  "canonical_url": "https://saastralabs.com/blog/content-tips-thin-demo-02",
   "og": {
     "title": "Content Tips",
     "description": "Short tips.",

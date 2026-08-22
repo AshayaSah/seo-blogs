@@ -1,12 +1,13 @@
 import Link from "next/link";
 import LogoutButton from "./LogoutButton";
 
-export type AdminTab = "queue" | "published" | "all";
+export type AdminTab = "queue" | "published" | "all" | "settings";
 
 const TABS: { key: AdminTab; label: string; href: string }[] = [
   { key: "queue", label: "Review queue", href: "/admin" },
   { key: "published", label: "Published", href: "/admin?tab=published" },
   { key: "all", label: "All posts", href: "/admin?tab=all" },
+  { key: "settings", label: "Settings", href: "/admin/settings" },
 ];
 
 export default function AdminNav({
@@ -14,7 +15,7 @@ export default function AdminNav({
   counts,
 }: {
   active?: AdminTab;
-  counts?: Record<AdminTab, number>;
+  counts?: Partial<Record<AdminTab, number>>;
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">

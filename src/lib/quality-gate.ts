@@ -1,4 +1,5 @@
 import type { BlogPayload } from "./validation";
+import { stripMarkdown } from "./markdown";
 
 // ---------------------------------------------------------------------------
 // Thresholds — the single source of truth for both the gate itself and the
@@ -46,6 +47,19 @@ export interface ExistingPostRef {
 const includesCI = (haystack: string, needle: string): boolean =>
   haystack.toLowerCase().includes(needle.toLowerCase());
 
+/**
+ * Resolve the textual content from whichever shape the agent provided.
+ * Prefers `content_sections` (the new structured path) and falls back to
+ * the legacy `content_body` string, or empty.
+ */
+function resolvedBody(payload: BlogPayload): string {
+  return (
+    payload.content_sections?.map((s) => s.content).join("\n\n") ??
+    payload.content_body ??
+    ""
+  );
+}
+
 /** First non-empty block, treating blank lines as paragraph separators. */
 function firstParagraph(body: string): string {
   const blocks = body
@@ -78,9 +92,10 @@ export function runQualityGate(
 ): QualityReport {
   const checks: QualityCheck[] = [];
 
-  // 1. Title length 50–60 chars.
+  // 1. Title length 50–60 chars (plain-text length — markdown syntax doesn't
+  //    render, so agents using **bold** in titles shouldn't be penalized).
   const { min: titleMin, max: titleMax } = QUALITY_GATE_THRESHOLDS.titleLength;
-  const titleLen = payload.title.length;
+  const titleLen = stripMarkdown(payload.title).length;
   checks.push({
     name: "title_length",
     passed: titleLen >= titleMin && titleLen <= titleMax,
@@ -100,7 +115,7 @@ export function runQualityGate(
   // 3. primary_keyword appears in title, first paragraph, and an image alt.
   const kw = payload.primary_keyword;
   const inTitle = includesCI(payload.title, kw);
-  const para = firstParagraph(payload.content_body);
+  const para = firstParagraph(resolvedBody(payload));
   const inFirstParagraph = includesCI(para, kw);
   const inImageAlt = includesCI(payload.featured_image.alt_text, kw);
   const missing = [
@@ -117,13 +132,13 @@ export function runQualityGate(
         : `"${kw}" missing from: ${missing.join(", ")}`,
   });
 
-  // 4. Word count of content_body ≥ minContentWords.
+  // 4. Word count of content ≥ minContentWords.
   const { minContentWords } = QUALITY_GATE_THRESHOLDS;
-  const words = wordCount(payload.content_body);
+  const words = wordCount(resolvedBody(payload));
   checks.push({
     name: "content_word_count",
     passed: words >= minContentWords,
-    detail: `content_body has ${words} words (want ≥ ${minContentWords})`,
+    detail: `content has ${words} words (want ≥ ${minContentWords})`,
   });
 
   // 5. Slug unused and title not a near-duplicate of an existing post.
@@ -168,6 +183,26 @@ export function runQualityGate(
           : `keyword_difficulty ${kd} within limit (≤ ${maxKeywordDifficulty})`,
   });
 
+  // 8. Section heading discipline: when content_sections is present, each
+  //    section's content should NOT start with a top-level (# or ##) heading
+  //    because the section `title` already becomes the H2 on the page.
+  if (payload.content_sections && payload.content_sections.length > 0) {
+    const badSections = payload.content_sections
+      .map((s, i) => {
+        const firstLine = s.content.split("\n")[0]?.trim() ?? "";
+        return /^#{1,2}\s/.test(firstLine) ? `section ${i + 1} ("${s.title}")` : null;
+      })
+      .filter(Boolean);
+    checks.push({
+      name: "section_heading_discipline",
+      passed: badSections.length === 0,
+      detail:
+        badSections.length === 0
+          ? "no top-level headings in section content"
+          : `top-level heading found in: ${badSections.join(", ")} — sections should use ###+ for sub-headings since title already becomes the H2`,
+    });
+  }
+
   return {
     passed: checks.every((c) => c.passed),
     checks,
@@ -181,11 +216,14 @@ export function runQualityGate(
 /**
  * Only content that clears every check AND wasn't explicitly submitted as a
  * draft may go straight to `published`; everything else is `flagged` for
- * human review.
+ * human review. When auto-publish is disabled by the operator the gate still
+ * runs (the report is valuable) but the status is always `flagged`.
  */
 export function decideStatus(
   payload: BlogPayload,
   report: QualityReport,
+  autoPublishEnabled: boolean,
 ): "published" | "flagged" {
+  if (!autoPublishEnabled) return "flagged";
   return report.passed && payload.status !== "draft" ? "published" : "flagged";
 }

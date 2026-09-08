@@ -4,11 +4,33 @@ import { COOKIE_NAME, verifySessionToken } from "@/src/lib/admin-auth";
 import { resolveRedirect } from "@/src/lib/redirects";
 import { db } from "@/src/db";
 import { posts } from "@/src/db/schema";
+import { SITE_URL } from "@/src/lib/site";
 
 // Next 16: the `middleware` convention was renamed to `proxy` and now defaults
 // to the Node.js runtime — so node:crypto (admin auth) and the DB client work.
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // --- Canonical host enforcement ----------------------------------------
+  // 301 the `www` alias and any platform domain (e.g. *.vercel.app) to the
+  // canonical SITE_URL host so crawlers only ever see one origin. Other
+  // non-canonical hosts (e.g. a custom domain mapping) are left untouched.
+  // Note: we read the Host header directly — `request.nextUrl.host` is derived
+  // from the server's own bound URL, not from the incoming request.
+  const canonicalUrl = new URL(SITE_URL);
+  const canonicalHost = canonicalUrl.host;
+  const incomingHost = request.headers.get("host") ?? request.nextUrl.host;
+  if (incomingHost !== canonicalHost) {
+    const hostname = incomingHost.split(":", 1)[0];
+    const isWwwAlias = hostname === `www.${canonicalUrl.hostname}`;
+    const isPlatformDomain = /(^|\.)vercel\.app$/i.test(hostname);
+    if (isWwwAlias || isPlatformDomain) {
+      const url = new URL(canonicalUrl);
+      url.pathname = request.nextUrl.pathname;
+      url.search = request.nextUrl.search;
+      return NextResponse.redirect(url.toString(), 301);
+    }
+  }
 
   // --- Public blog: slug redirects (301/302) + soft-delete (410) ----------
   if (pathname.startsWith("/blog")) {
@@ -17,6 +39,14 @@ export async function proxy(request: NextRequest) {
       return handleBlogSlug(request, decodeURIComponent(match[1]));
     }
     // /blog, /blog/category/*, /blog/tag/* are ordinary public pages.
+    return NextResponse.next();
+  }
+
+  // --- Public pages: done here --------------------------------------------
+  // The proxy also runs for every non-admin page (see matcher) so the
+  // canonical-host check above works site-wide — but ONLY /admin and
+  // /api/admin are behind the auth gate below.
+  if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/admin")) {
     return NextResponse.next();
   }
 
@@ -91,5 +121,8 @@ export const config = {
     "/api/admin/:path*",
     "/blog",
     "/blog/:path*",
+    // Catch-all page matcher (excludes Next internals, static files, and /api)
+    // so the canonical-host redirect applies to every public page.
+    "/((?!_next/static|_next/image|favicon.ico|api|.*\\..*).*)",
   ],
 };

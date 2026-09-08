@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
-import { SITE_NAME } from "@/src/lib/site";
+import { SITE_NAME, absoluteUrl } from "@/src/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: `Privacy policy for ${SITE_NAME}.`,
-  alternates: { canonical: "/privacy-policy" },
+  description: `The ${SITE_NAME} privacy policy — what data we collect, how we use it, and the choices you have about your information.`,
+  alternates: { canonical: absoluteUrl("/privacy-policy") },
+  openGraph: {
+    title: `Privacy Policy — ${SITE_NAME}`,
+    description: `The ${SITE_NAME} privacy policy — what data we collect, how we use it, and the choices you have about your information.`,
+    url: absoluteUrl("/privacy-policy"),
+    type: "website",
+    images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Privacy Policy — ${SITE_NAME}`,
+    description: `The ${SITE_NAME} privacy policy — what data we collect, how we use it, and the choices you have about your information.`,
+  },
 };
 
 export default function PrivacyPolicyPage() {

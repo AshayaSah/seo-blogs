@@ -1,14 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { getAuthorsWithCounts } from "@/src/lib/posts";
-import { SITE_NAME } from "@/src/lib/site";
+import { SITE_NAME, absoluteUrl } from "@/src/lib/site";
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Authors",
-  description: `The people writing on ${SITE_NAME}.`,
-  alternates: { canonical: "/authors" },
+  description: `Meet the writers and editors on ${SITE_NAME} — the voices covering SEO, content strategy, and technology.`,
+  alternates: { canonical: absoluteUrl("/authors") },
+  openGraph: {
+    title: `Authors — ${SITE_NAME}`,
+    description: `Meet the writers and editors on ${SITE_NAME} — the voices covering SEO, content strategy, and technology.`,
+    url: absoluteUrl("/authors"),
+    type: "website",
+    images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Authors — ${SITE_NAME}`,
+    description: `Meet the writers and editors on ${SITE_NAME} — the voices covering SEO, content strategy, and technology.`,
+  },
 };
 
 export default async function AuthorsPage() {
@@ -30,11 +43,12 @@ export default async function AuthorsPage() {
                 className="flex items-center gap-4 rounded-xl border border-border p-5 transition-colors hover:bg-muted"
               >
                 {a.avatarUrl && (
-                  <img
+                  <Image
                     src={a.avatarUrl}
                     alt={a.name ?? "Author"}
                     width={56}
                     height={56}
+                    sizes="56px"
                     className="h-14 w-14 rounded-full border border-border object-cover"
                   />
                 )}

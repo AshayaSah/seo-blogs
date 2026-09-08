@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
   getAuthorBySlug,
@@ -7,6 +8,7 @@ import {
   getPublishedPostsByAuthor,
 } from "@/src/lib/posts";
 import { personJsonLd } from "@/src/lib/jsonld";
+import { limitText } from "@/src/lib/markdown";
 import { SITE_NAME, absoluteUrl } from "@/src/lib/site";
 import JsonLd from "@/src/components/JsonLd";
 
@@ -28,8 +30,9 @@ export async function generateMetadata({
   if (!author) return { title: "Author not found" };
 
   const title = `${author.name} — ${SITE_NAME}`;
-  const description =
-    author.bio ?? `Articles by ${author.name} on ${SITE_NAME}.`;
+  const description = limitText(
+    author.bio ?? `Articles by ${author.name} on ${SITE_NAME} — their latest research, guides, and editorial perspective.`,
+  );
   const canonical = absoluteUrl(`/author/${author.slug}`);
 
   return {
@@ -37,13 +40,13 @@ export async function generateMetadata({
     description,
     alternates: { canonical },
     openGraph: {
-      title,
+      title: `${author.name} — ${SITE_NAME}`,
       description,
       url: canonical,
       type: "profile",
-      images: author.avatarUrl ? [author.avatarUrl] : undefined,
+      images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
     },
-    twitter: { card: "summary", title, description },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
@@ -68,17 +71,17 @@ export default async function AuthorPage({
   const sameAs = author.sameAs ?? [];
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <div className="mx-auto max-w-3xl px-6 py-12">
       <JsonLd data={personJsonLd(author)} />
 
       <header className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
         {author.avatarUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={author.avatarUrl}
             alt={author.name ?? "Author avatar"}
             width={96}
             height={96}
+            sizes="96px"
             className="h-24 w-24 rounded-full border border-border object-cover"
           />
         )}
@@ -155,6 +158,6 @@ export default async function AuthorPage({
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

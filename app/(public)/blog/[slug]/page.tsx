@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
   getPublishedSlugs,
@@ -10,7 +11,12 @@ import {
   type FeaturedImage,
   type Og,
 } from "@/src/lib/posts";
-import { renderMarkdown, renderInlineMarkdown, stripMarkdown } from "@/src/lib/markdown";
+import {
+  renderArticleHtml,
+  renderInlineMarkdown,
+  stripMarkdown,
+  limitText,
+} from "@/src/lib/markdown";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd } from "@/src/lib/jsonld";
 import { SITE_NAME, absoluteUrl, slugify } from "@/src/lib/site";
 import { sectionizeForAds, sectionizeForAdsFromSections } from "@/src/lib/ads/placement";
@@ -38,10 +44,12 @@ export async function generateMetadata({
   if (!post) return { title: "Not found" };
 
   const og = (post.og as Og | null) ?? {};
-  const image = post.featuredImage as FeaturedImage | null;
-  const canonical = post.canonicalUrl ?? absoluteUrl(`/blog/${post.slug}`);
+  // The canonical is always the local post URL. Ingestion may store an original
+  // source URL in post.canonicalUrl, but the published post on this origin is
+  // the authoritative copy, so we never self-canonicalize elsewhere.
+  const canonical = absoluteUrl(`/blog/${post.slug}`);
   const title = og.title ?? (post.title ? stripMarkdown(post.title) : SITE_NAME);
-  const description = og.description ?? post.metaDescription ?? undefined;
+  const description = limitText(og.description ?? post.metaDescription);
 
   return {
     title,
@@ -53,23 +61,13 @@ export async function generateMetadata({
       url: canonical,
       type: (og.type as "article") ?? "article",
       siteName: SITE_NAME,
+      locale: "en_US",
       publishedTime: post.publishedAt?.toISOString(),
-      images: image
-        ? [
-            {
-              url: image.url,
-              width: image.width,
-              height: image.height,
-              alt: image.alt_text,
-            },
-          ]
-        : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: image ? [image.url] : undefined,
     },
   };
 }
@@ -129,9 +127,7 @@ export default async function BlogPostPage({
   const galleryImages = (post.images ?? []) as GalleryImage[];
 
   const contentHtml = post.contentBody
-    ? post.contentFormat === "html"
-      ? post.contentBody
-      : renderMarkdown(post.contentBody)
+    ? renderArticleHtml(post.contentBody, post.contentFormat === "html" ? "html" : "markdown")
     : "";
 
   const hasModularContent = contentSections.length > 0;
@@ -143,8 +139,23 @@ export default async function BlogPostPage({
     day: "numeric",
   });
 
+  const updatedAt = post.updatedAt;
+  const updatedISO = updatedAt?.toISOString();
+  const updatedLabel = updatedAt?.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  // Show "Updated" only when the change lands on a different calendar day, so
+  // a same-day save doesn't render a redundant duplicate of the date.
+  const showUpdated =
+    !!updatedAt &&
+    !!post.publishedAt &&
+    updatedAt.getTime() !== post.publishedAt.getTime() &&
+    updatedAt.toDateString() !== post.publishedAt.toDateString();
+
   return (
-    <main className="site-container px-6 py-12">
+    <div className="site-container px-6 py-12">
       {/* Structured data */}
       <JsonLd data={articleJsonLd(post)} />
       <JsonLd data={breadcrumbJsonLd(post)} />
@@ -166,7 +177,7 @@ export default async function BlogPostPage({
               <li aria-hidden>›</li>
               <li>
                 <Link
-                  href={`/category/${slugify(post.category)}`}
+                  href={`/blog/category/${slugify(post.category)}`}
                   className="hover:text-foreground"
                 >
                   {post.category}
@@ -209,6 +220,15 @@ export default async function BlogPostPage({
                 <time dateTime={publishedISO}>{publishedLabel}</time>
               </>
             )}
+            {showUpdated && updatedISO && updatedLabel && (
+              <>
+                <span aria-hidden>·</span>
+                <time dateTime={updatedISO}>
+                  <span className="font-medium text-foreground">Updated</span>{" "}
+                  {updatedLabel}
+                </time>
+              </>
+            )}
             {post.readTimeMinutes && (
               <>
                 <span aria-hidden>·</span>
@@ -218,14 +238,17 @@ export default async function BlogPostPage({
           </div>
         </header>
 
-        {/* Featured image: explicit width/height + height:auto keeps the
-            aspect-ratio box reserved, avoiding layout shift (CLS-safe). */}
+        {/* Featured image: next/image reserves the aspect-ratio box using the
+            stored width/height + sizes, so there's no layout shift (CLS-safe).
+            priority preloads the LCP image for faster Largest Contentful Paint. */}
         {image && (
-          <img
+          <Image
             src={image.url}
             alt={image.alt_text}
             width={image.width}
             height={image.height}
+            sizes="100vw"
+            priority
             style={{ width: "100%", height: "auto" }}
             className="mb-8 rounded-xl border border-border"
           />
@@ -271,18 +294,19 @@ export default async function BlogPostPage({
                     <div
                       className="article-content"
                       dangerouslySetInnerHTML={{
-                        __html:
-                          post.contentFormat === "html"
-                            ? section.content
-                            : renderMarkdown(section.content),
+                        __html: renderArticleHtml(
+                          section.content,
+                          post.contentFormat === "html" ? "html" : "markdown",
+                        ),
                       }}
                     />
                     {section.image && section.image.url && (
-                      <img
+                      <Image
                         src={section.image.url}
                         alt={section.image.alt_text}
                         width={section.image.width}
                         height={section.image.height}
+                        sizes="100vw"
                         loading="lazy"
                         style={{ width: "100%", height: "auto" }}
                         className="mt-6 rounded-xl border border-border"
@@ -322,11 +346,12 @@ export default async function BlogPostPage({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {galleryImages.map((img, i) => (
                 <figure key={i}>
-                  <img
+                  <Image
                     src={img.url}
                     alt={img.alt_text}
                     width={img.width}
                     height={img.height}
+                    sizes="(min-width: 640px) 50vw, 100vw"
                     loading="lazy"
                     style={{ width: "100%", height: "auto" }}
                     className="rounded-lg border border-border"
@@ -413,6 +438,6 @@ export default async function BlogPostPage({
           </ul>
         </section>
       )}
-    </main>
+    </div>
   );
 }

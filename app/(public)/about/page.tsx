@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE_NAME } from "@/src/lib/site";
+import { SITE_NAME, absoluteUrl } from "@/src/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
-  description: `About ${SITE_NAME}.`,
-  alternates: { canonical: "/about" },
+  description: `About ${SITE_NAME} — the people, mission, and editorial approach behind our deep-dives into SEO, content strategy, and AI-assisted publishing.`,
+  alternates: { canonical: absoluteUrl("/about") },
+  openGraph: {
+    title: `About — ${SITE_NAME}`,
+    description: `About ${SITE_NAME} — the people, mission, and editorial approach behind our deep-dives into SEO, content strategy, and AI-assisted publishing.`,
+    url: absoluteUrl("/about"),
+    type: "website",
+    images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `About — ${SITE_NAME}`,
+    description: `About ${SITE_NAME} — the people, mission, and editorial approach behind our deep-dives into SEO, content strategy, and AI-assisted publishing.`,
+  },
 };
 
 export default function AboutPage() {

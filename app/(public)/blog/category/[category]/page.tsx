@@ -28,10 +28,24 @@ export async function generateMetadata({
   const { category } = await params;
   const cat = await resolveCategory(category);
   if (!cat) return { title: "Category not found" };
+  const title = `${cat.name} articles`;
+  const description = `Articles in the ${cat.name} category on ${SITE_NAME}.`;
   return {
-    title: `${cat.name} articles`,
-    description: `Articles in the ${cat.name} category on ${SITE_NAME}.`,
-    alternates: { canonical: `/blog/category/${cat.slug}` },
+    title,
+    description,
+    alternates: { canonical: absoluteUrl(`/blog/category/${cat.slug}`) },
+    openGraph: {
+      title: `${title} — ${SITE_NAME}`,
+      description,
+      url: absoluteUrl(`/blog/category/${cat.slug}`),
+      type: "website",
+      images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} — ${SITE_NAME}`,
+      description,
+    },
   };
 }
 

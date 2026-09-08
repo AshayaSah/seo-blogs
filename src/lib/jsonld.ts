@@ -1,5 +1,5 @@
 import { ORGANIZATION, SITE_NAME, SITE_URL, absoluteUrl, slugify } from "./site";
-import { stripMarkdown } from "./markdown";
+import { stripMarkdown, limitText } from "./markdown";
 import type { FaqItem, FeaturedImage, PostWithAuthor } from "./posts";
 import type { SelectAuthor } from "@/src/db/schema";
 
@@ -12,6 +12,20 @@ export function organizationJsonLd(): Json {
     name: ORGANIZATION.name,
     url: ORGANIZATION.url,
     logo: ORGANIZATION.logo,
+  };
+}
+
+export function websiteJsonLd(): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${absoluteUrl("/search")}?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 
@@ -30,7 +44,10 @@ export function personJsonLd(author: SelectAuthor): Json {
 }
 
 export function articleJsonLd(post: PostWithAuthor): Json {
-  const url = post.canonicalUrl ?? absoluteUrl(`/blog/${post.slug}`);
+  // Canonical must match the page's <link rel="canonical"> (the local URL), so
+  // mainEntityOfPage points at the same URL even when ingestion stored a source
+  // canonicalUrl.
+  const url = absoluteUrl(`/blog/${post.slug}`);
   const image = post.featuredImage as FeaturedImage | null;
   const author = post.author;
 
@@ -45,7 +62,7 @@ export function articleJsonLd(post: PostWithAuthor): Json {
     "@context": "https://schema.org",
     "@type": post.structuredDataType ?? "Article",
     headline: post.title ? stripMarkdown(post.title) : undefined,
-    description: post.metaDescription ?? undefined,
+    description: limitText(post.metaDescription),
     image: allImages.length > 0 ? allImages : undefined,
     datePublished: post.publishedAt?.toISOString(),
     dateModified: (post.updatedAt ?? post.publishedAt)?.toISOString(),
@@ -77,16 +94,14 @@ export function breadcrumbJsonLd(post: PostWithAuthor): Json {
     { name: SITE_NAME, url: SITE_URL },
   ];
   if (post.category) {
-    // TODO: a /category/[slug] index route doesn't exist yet — add one so this
-    // breadcrumb link resolves. The structured data is valid regardless.
     items.push({
       name: post.category,
-      url: absoluteUrl(`/category/${slugify(post.category)}`),
+      url: absoluteUrl(`/blog/category/${slugify(post.category)}`),
     });
   }
   items.push({
     name: post.title ? stripMarkdown(post.title) : "Article",
-    url: post.canonicalUrl ?? absoluteUrl(`/blog/${post.slug}`),
+    url: absoluteUrl(`/blog/${post.slug}`),
   });
 
   return {

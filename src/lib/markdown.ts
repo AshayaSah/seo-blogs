@@ -32,3 +32,34 @@ export function stripMarkdown(md: string): string {
   const html = renderInlineMarkdown(md);
   return html.replace(/<[^>]+>/g, "");
 }
+
+/**
+ * Demote every <h1> in rendered article HTML to <h2>. Article bodies may be
+ * ingested with `# …` (or literal <h1>) headings, but a page may only have one
+ * <h1> — the post title rendered by the page template. Promotes nothing; the
+ * sole <h1> lives outside the article body.
+ */
+export function demoteH1ToH2(html: string): string {
+  return html
+    .replace(/<h1(\s[^>]*)?>/gi, "<h2$1>")
+    .replace(/<\/h1>/gi, "</h2>");
+}
+
+/**
+ * Render a post body or section to HTML, then normalize heading levels so the
+ * article never emits an <h1> from its own content.
+ */
+export function renderArticleHtml(content: string, format: "markdown" | "html"): string {
+  const html = format === "html" ? content : renderMarkdown(content);
+  return demoteH1ToH2(html);
+}
+
+/** Word-safe truncation with a trailing ellipsis, for metas and previews. */
+export function limitText(text: string | null | undefined, max = 160): string {
+  if (!text) return "";
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1).split(/\s/);
+  cut.pop();
+  const truncated = cut.join(" ").replace(/[,;:]+$/, "");
+  return `${truncated}…`;
+}

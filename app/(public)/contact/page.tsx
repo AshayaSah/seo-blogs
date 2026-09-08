@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
-import { SITE_NAME } from "@/src/lib/site";
+import { SITE_NAME, absoluteUrl } from "@/src/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: `Contact ${SITE_NAME}.`,
-  alternates: { canonical: "/contact" },
+  description: `Contact the ${SITE_NAME} editorial team — questions, corrections, collaborations, or press inquiries are welcome.`,
+  alternates: { canonical: absoluteUrl("/contact") },
+  openGraph: {
+    title: `Contact — ${SITE_NAME}`,
+    description: `Contact the ${SITE_NAME} editorial team — questions, corrections, collaborations, or press inquiries are welcome.`,
+    url: absoluteUrl("/contact"),
+    type: "website",
+    images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Contact — ${SITE_NAME}`,
+    description: `Contact the ${SITE_NAME} editorial team — questions, corrections, collaborations, or press inquiries are welcome.`,
+  },
 };
 
 export default function ContactPage() {

@@ -28,10 +28,24 @@ export async function generateMetadata({
   const { tag } = await params;
   const found = await resolveTag(tag);
   if (!found) return { title: "Tag not found" };
+  const title = `#${found.name}`;
+  const description = `Posts tagged “${found.name}” on ${SITE_NAME} — hand-selected deep-dives, guides, and research on the topic.`;
   return {
-    title: `#${found.name}`,
-    description: `Posts tagged “${found.name}” on ${SITE_NAME}.`,
-    alternates: { canonical: `/blog/tag/${found.slug}` },
+    title,
+    description,
+    alternates: { canonical: absoluteUrl(`/blog/tag/${found.slug}`) },
+    openGraph: {
+      title: `${title} — ${SITE_NAME}`,
+      description,
+      url: absoluteUrl(`/blog/tag/${found.slug}`),
+      type: "website",
+      images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} — ${SITE_NAME}`,
+      description,
+    },
   };
 }
 

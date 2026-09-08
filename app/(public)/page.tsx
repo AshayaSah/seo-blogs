@@ -1,10 +1,28 @@
 import Link from "next/link";
+import Image from "next/image";
+import type { Metadata } from "next";
 import { getPublishedPostsLite, getCategories } from "@/src/lib/posts";
-import { SITE_DESCRIPTION } from "@/src/lib/site";
+import { SITE_NAME, SITE_DESCRIPTION, absoluteUrl } from "@/src/lib/site";
 import PostCard from "@/src/components/site/PostCard";
 import Newsletter from "@/src/components/site/Newsletter";
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  alternates: { canonical: absoluteUrl("/") },
+  openGraph: {
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: absoluteUrl("/"),
+    type: "website",
+    images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+};
 
 function formatDate(d: Date | null): string | null {
   return d
@@ -121,11 +139,12 @@ export default async function HomePage() {
                           aria-hidden
                           tabIndex={-1}
                         >
-                          <img
+                          <Image
                             src={p.featuredImage.url}
                             alt=""
                             width={64}
                             height={64}
+                            sizes="64px"
                             className="h-16 w-16 rounded-lg object-cover"
                           />
                         </Link>

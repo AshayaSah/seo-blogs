@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { FeaturedImage } from "@/src/lib/posts";
 
 // Renders a card's featured image, but removes itself if the URL fails to load
@@ -17,12 +18,11 @@ export default function CardImage({
   if (!ok) return null;
 
   return (
-    <img
+    <Image
+      fill
       src={image.url}
       alt={image.alt_text}
-      width={image.width}
-      height={image.height}
-      loading="lazy"
+      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
       onError={() => setOk(false)}
       className={className}
     />

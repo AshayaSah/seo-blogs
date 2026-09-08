@@ -5,7 +5,7 @@ import {
   getCategories,
   getTags,
 } from "@/src/lib/posts";
-import { SITE_NAME } from "@/src/lib/site";
+import { SITE_NAME, absoluteUrl } from "@/src/lib/site";
 import PostCard from "@/src/components/site/PostCard";
 
 export const revalidate = 3600;
@@ -14,8 +14,20 @@ const PAGE_SIZE = 9;
 
 export const metadata: Metadata = {
   title: "Blog",
-  description: `All articles on ${SITE_NAME}.`,
-  alternates: { canonical: "/blog" },
+  description: `Browse every article on ${SITE_NAME} — deep-dives on SEO, keyword research, content marketing, and AI-assisted publishing.`,
+  alternates: { canonical: absoluteUrl("/blog") },
+  openGraph: {
+    title: "Blog — " + SITE_NAME,
+    description: `Browse every article on ${SITE_NAME} — deep-dives on SEO, keyword research, content marketing, and AI-assisted publishing.`,
+    url: absoluteUrl("/blog"),
+    type: "website",
+    images: [{ url: absoluteUrl("/opengraph-image"), width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog — " + SITE_NAME,
+    description: `Browse every article on ${SITE_NAME} — deep-dives on SEO, keyword research, content marketing, and AI-assisted publishing.`,
+  },
 };
 
 export default async function BlogIndexPage({

@@ -70,6 +70,7 @@ export type PostCard = {
   featuredImage: FeaturedImage | null;
   readTimeMinutes: number | null;
   publishedAt: Date | null;
+  updatedAt: Date | null;
 };
 
 /**
@@ -91,6 +92,7 @@ export const getPublishedPostsLite = cache(async (): Promise<PostCard[]> => {
       featuredImage: posts.featuredImage,
       readTimeMinutes: posts.readTimeMinutes,
       publishedAt: posts.publishedAt,
+      updatedAt: posts.updatedAt,
     })
     .from(posts)
     .where(publicPost())

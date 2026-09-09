@@ -123,6 +123,6 @@ export const config = {
     "/blog/:path*",
     // Catch-all page matcher (excludes Next internals, static files, and /api)
     // so the canonical-host redirect applies to every public page.
-    "/((?!_next/static|_next/image|favicon.ico|api|.*\\..*).*)",
+    "/((?!_next/static|_next/image|api|.*\\..*).*)",
   ],
 };

@@ -1,6 +1,7 @@
 {
-  "name": "seo_blogs",
+  "name": "knowra",
   "version": "0.1.0",
+  "description": "Knowra — AI-powered SEO & content strategy insights, powered by Saastra Labs.",
   "private": true,
   "scripts": {
     "dev": "next dev",

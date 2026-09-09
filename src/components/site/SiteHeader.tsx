@@ -28,15 +28,12 @@ export default function SiteHeader({ categories }: { categories: Taxonomy[] }) {
       <div className="site-container flex items-center justify-between gap-4 py-4">
         {/* Brand + nav, grouped left */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-lg font-bold tracking-tight">
-              Saastra
-            </span>
+          <Link href="/" className="flex items-center">
             <Image
-              src="/logo.svg"
-              alt={SITE_NAME}
-              width={36}
-              height={36}
+              src="/logo_knowra.png"
+              alt={`${SITE_NAME} logo`}
+              width={50}
+              height={40}
               className="object-contain"
               priority
             />

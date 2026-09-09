@@ -21,7 +21,7 @@ export default function AdminNav({
     <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
       <div className="flex flex-wrap items-center gap-6">
         <Link href="/admin" className="text-sm font-bold tracking-tight">
-          Saastra Admin
+          Knowra Admin
         </Link>
         <nav className="flex flex-wrap items-center gap-1">
           {TABS.map((tab) => (

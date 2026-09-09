@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SITE_NAME, absoluteUrl } from "@/src/lib/site";
+import { SITE_NAME, absoluteUrl, PARENT_COMPANY_NAME, PARENT_COMPANY_URL } from "@/src/lib/site";
 
 export const metadata: Metadata = {
   title: "About",
@@ -30,6 +30,18 @@ export default function AboutPage() {
           strategy. Our goal is to help readers understand how modern search and
           discovery work, and how to create content that serves both people and
           search engines.
+        </p>
+        <p>
+          {SITE_NAME} is built and operated by{" "}
+          <a
+            href={PARENT_COMPANY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-primary"
+          >
+            {PARENT_COMPANY_NAME}
+          </a>
+          .
         </p>
         <h2>How we work</h2>
         <p>

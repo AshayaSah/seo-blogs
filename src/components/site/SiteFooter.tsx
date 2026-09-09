@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { SITE_NAME } from "@/src/lib/site";
+import Image from "next/image";
+import { SITE_NAME, PARENT_COMPANY_NAME, PARENT_COMPANY_URL } from "@/src/lib/site";
 import type { Taxonomy } from "@/src/lib/posts";
 
 export default function SiteFooter({
@@ -11,7 +12,15 @@ export default function SiteFooter({
     <footer className="mt-16 border-t border-border">
       <div className="site-container grid gap-8 py-12 sm:grid-cols-2 md:grid-cols-4">
         <div>
-          <p className="text-base font-bold">{SITE_NAME}</p>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo_knowra.png"
+              alt={`${SITE_NAME} logo`}
+              width={100}
+              height={80}
+              className="object-contain"
+            />
+          </Link>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">
             AI-assisted articles on SEO, search, and content strategy.
           </p>
@@ -67,6 +76,17 @@ export default function SiteFooter({
           </p>
           <p className="mt-2">
             © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+          </p>
+          <p className="mt-2">
+            {SITE_NAME} is powered by{" "}
+            <a
+              href={PARENT_COMPANY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground"
+            >
+              {PARENT_COMPANY_NAME}
+            </a>
           </p>
         </div>
       </div>

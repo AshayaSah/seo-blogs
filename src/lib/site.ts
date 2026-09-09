@@ -4,16 +4,20 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 ).replace(/\/$/, "");
 
-export const SITE_NAME = "Saastra Labs Blogs";
+export const SITE_NAME = "Knowra";
 
 export const SITE_DESCRIPTION =
-  "AI-assisted articles on SEO, search, and content strategy.";
+  "Knowra — AI-powered SEO & content strategy insights, powered by Saastra Labs.";
+
+// Parent company constants
+export const PARENT_COMPANY_NAME = "Saastra Labs";
+export const PARENT_COMPANY_URL = "https://saastralabs.com/";
 
 // Used by the site-wide Organization schema and as a publisher reference.
 export const ORGANIZATION = {
   name: SITE_NAME,
   url: SITE_URL,
-  logo: `${SITE_URL}/logo.png`,
+  logo: `${SITE_URL}/logo_knowra.png`,
 };
 
 /** Turn arbitrary text (e.g. a category name) into a URL-safe slug. */

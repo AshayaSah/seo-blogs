@@ -28,6 +28,20 @@ async function toDataUri(image?: FeaturedImage | null): Promise<string | null> {
   }
 }
 
+async function getLogoDataUri(): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/logo_knowra.png`,
+      { signal: AbortSignal.timeout(5000) },
+    );
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    return `data:image/png;base64,${buf.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
 function stripMarkdown(input: string): string {
   return input.replace(/[#*_`>`[\]()!]/g, "").trim();
 }
@@ -65,6 +79,7 @@ export default async function Image({
   const title = stripMarkdown(post.title ?? post.slug);
   const author = post.author?.name?.trim() ?? "";
   const img = await toDataUri(post.featuredImage as FeaturedImage | null);
+  const logo = await getLogoDataUri();
 
   return new ImageResponse(
     (
@@ -87,8 +102,18 @@ export default async function Image({
             padding: "64px",
           }}
         >
-          <div style={{ display: "flex", fontSize: 28, color: "#c7d2fe" }}>
-            {SITE_NAME}
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {logo && (
+              <img
+                src={logo}
+                width={70}
+                height={56}
+                style={{ objectFit: "contain" }}
+              />
+            )}
+            <div style={{ display: "flex", fontSize: 28, color: "#c7d2fe" }}>
+              {SITE_NAME}
+            </div>
           </div>
           <div
             style={{

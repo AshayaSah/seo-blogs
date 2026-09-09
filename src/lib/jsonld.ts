@@ -1,4 +1,4 @@
-import { ORGANIZATION, SITE_NAME, SITE_URL, absoluteUrl, slugify } from "./site";
+import { ORGANIZATION, SITE_NAME, SITE_URL, absoluteUrl, slugify, PARENT_COMPANY_NAME, PARENT_COMPANY_URL } from "./site";
 import { stripMarkdown, limitText } from "./markdown";
 import type { FaqItem, FeaturedImage, PostWithAuthor } from "./posts";
 import type { SelectAuthor } from "@/src/db/schema";
@@ -12,6 +12,11 @@ export function organizationJsonLd(): Json {
     name: ORGANIZATION.name,
     url: ORGANIZATION.url,
     logo: ORGANIZATION.logo,
+    parentOrganization: {
+      "@type": "Organization",
+      name: PARENT_COMPANY_NAME,
+      url: PARENT_COMPANY_URL,
+    },
   };
 }
 

@@ -12,7 +12,22 @@ export const size = {
 };
 export const contentType = "image/png";
 
+async function getLogoDataUri(): Promise<string | null> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/logo_knowra.png`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    return `data:image/png;base64,${buf.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
 export default async function Image() {
+  const logo = await getLogoDataUri();
+
   return new ImageResponse(
     (
       <div
@@ -27,6 +42,14 @@ export default async function Image() {
             "linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #312e81 100%)",
         }}
       >
+        {logo && (
+          <img
+            src={logo}
+            width={200}
+            height={160}
+            style={{ objectFit: "contain" }}
+          />
+        )}
         <div
           style={{
             display: "flex",
